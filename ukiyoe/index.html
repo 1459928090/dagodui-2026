@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>班级浮世绘 — 大对勾2026级</title>
+  <link rel="stylesheet" href="css/ukiyoe.css">
+</head>
+<body>
+
+  <!-- ============ 导航栏 ============ -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo"><a href="index.html">🎨 班级浮世绘</a></div>
+      <button class="nav-toggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="index.html" class="active">浮世绘</a></li>
+        <li><a href="characters.html">人物</a></li>
+        <li><a href="spaces.html">空间</a></li>
+        <li><a href="timeline.html">时间</a></li>
+        <li><a href="artifacts.html">风物</a></li>
+        <li><a href="../index.html">← 回主站</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ============ Hero ============ -->
+  <section class="hero">
+    <div class="hero-badge">ukiyoe · v1.0</div>
+    <h1>班级<span class="highlight">浮世绘</span></h1>
+    <p class="hero-subtitle">浮世，短暂而鲜活的人间；绘，描绘记录。<br>一幅用细节编织的「班级清明上河图」</p>
+  </section>
+
+  <!-- ============ 那年今日滚动窗 ============ -->
+  <div class="ticker-wrap" id="ticker-wrap">
+    <div class="ticker-track" id="ticker-track">
+      <span>📜 那年今日 · 加载中……</span>
+    </div>
+  </div>
+
+  <!-- ============ 四大维度入口 ============ -->
+  <section class="dimensions">
+    <a href="characters.html" class="dim-card">
+      <span class="dim-icon">👥</span>
+      <h3>人物群像</h3>
+      <p>每个人都是主角 — 互写印象、趣味之最、同桌编年史</p>
+    </a>
+    <a href="spaces.html" class="dim-card">
+      <span class="dim-icon">🗺</span>
+      <h3>空间志</h3>
+      <p>给每个角落立传 — 座位热力图、秘密据点大揭秘</p>
+    </a>
+    <a href="timeline.html" class="dim-card">
+      <span class="dim-icon">⏳</span>
+      <h3>时间线</h3>
+      <p>我们共同的脉搏 — 那年今日、心情气象站</p>
+    </a>
+    <a href="artifacts.html" class="dim-card">
+      <span class="dim-icon">🏺</span>
+      <h3>风物志</h3>
+      <p>消失的日常文物 — 线上博物馆、暗号与梗百科</p>
+    </a>
+  </section>
+
+  <!-- ============ 今日心情快捷投票 ============ -->
+  <section class="section-inner" style="padding-top:0">
+    <h2 class="section-title">今日心情</h2>
+    <p class="section-subtitle">点一下，记录此刻的心情吧</p>
+    <div class="mood-grid" id="quick-mood">
+      <!-- JS渲染 -->
+    </div>
+    <p style="text-align:center;margin-top:0.5rem">
+      <a href="timeline.html" style="font-size:0.9rem;color:var(--text-muted)">查看全班心情趋势 →</a>
+    </p>
+  </section>
+
+  <!-- ============ 页脚 ============ -->
+  <footer class="footer">
+    <p>🎨 班级浮世绘 · 大对勾托管中心2026级</p>
+    <p style="margin-top:0.3rem">正史给外人看，浮世绘是只属于我们的「野史」</p>
+    <p style="margin-top:0.8rem;font-size:0.78rem">
+      <a href="../index.html">← 返回主站</a>
+      &nbsp;·&nbsp;
+      <a href="../secret.html">📜 时光信件</a>
+    </p>
+  </footer>
+
+  <button class="back-top" id="back-top" aria-label="回到顶部">↑</button>
+
+  <script src="js/config.js"></script>
+  <script src="js/lc-init.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // ========== 首页专属逻辑 ==========
+    (function() {
+      var cfg = UKIYOE_CONFIG;
+
+      // 那年今日 ticker
+      document.addEventListener("DOMContentLoaded", function() {
+        setupTicker();
+
+        // 今日心情快捷投票
+        var moodGrid = document.getElementById("quick-mood");
+        if (moodGrid) {
+          moodGrid.innerHTML = cfg.moodOptions.map(function(m) {
+            return '<button class="mood-btn" data-mood="' + m.value + '" title="' + m.label + '">' +
+              m.emoji + '<span class="mood-label">' + m.label + '</span></button>';
+          }).join("");
+
+          // Check if already voted today
+          var voterName = localStorage.getItem("ukiyoe_nickname") || "anonymous";
+
+          moodGrid.querySelectorAll(".mood-btn").forEach(function(btn) {
+            btn.addEventListener("click", async function() {
+              var already = await DB.hasTodayRecord("MoodVotes", voterName);
+              if (already) {
+                showToast("你今天已经投过票啦，明天再来吧～");
+                return;
+              }
+              var mood = this.dataset.mood;
+              await DB.save("MoodVotes", {
+                date: new Date().toISOString().slice(0, 10),
+                mood: mood,
+                message: "",
+                author: voterName,
+                createdAt: new Date().toISOString()
+              });
+              showToast("心情已记录 " + (cfg.moodOptions.find(function(m){return m.value===mood})||{}).emoji || "");
+              // highlight selected
+              moodGrid.querySelectorAll(".mood-btn").forEach(function(b){ b.classList.remove("selected"); });
+              this.classList.add("selected");
+            });
+          });
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>

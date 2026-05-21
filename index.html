@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>大对勾托管中心2026级 — 我们的班级回忆</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ============ 导航栏 ============ -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo">大对勾托管·2026级</div>
+      <button class="nav-toggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="#home" class="active">首页</a></li>
+        <li><a href="#photos">相册</a></li>
+        <li><a href="#videos">视频</a></li>
+        <li><a href="#timeline">回忆</a></li>
+        <li><a href="#files">文件</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ============ 首页 Hero ============ -->
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <div class="hero-badge">Class of 2026</div>
+      <h1>大对勾托管中心<span class="highlight">2026级</span></h1>
+      <p class="hero-subtitle">青春不散场 · 梦想正起航</p>
+    </div>
+    <div class="hero-scroll">
+      <span>向下探索回忆</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
+    </div>
+  </section>
+
+  <!-- ============ 班级合影轮播 ============ -->
+  <section id="gallery">
+    <div class="section-inner">
+      <h2 class="section-title">班级合影</h2>
+      <p class="section-subtitle">定格每一段属于我们的时光</p>
+      <div class="carousel-wrapper">
+        <div class="carousel-track"></div>
+        <button class="carousel-btn prev">&lsaquo;</button>
+        <button class="carousel-btn next">&rsaquo;</button>
+        <div class="carousel-dots"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 班主任寄语 ============ -->
+  <section class="teacher-section" id="message">
+    <div class="section-inner">
+      <h2 class="section-title">班主任寄语</h2>
+      <p class="section-subtitle">写给2026级的每一个你</p>
+      <div class="message-card">
+        <div class="message-text" id="message-text"></div>
+        <div class="message-signature" id="message-signature"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 中考倒计时 ============ -->
+  <section class="countdown-section" id="countdown">
+    <div class="section-inner">
+      <h2 class="section-title">距离2026中考还有</h2>
+      <div class="countdown-grid" id="countdown-grid"></div>
+    </div>
+  </section>
+
+  <!-- ============ 公告栏 ============ -->
+  <section id="notices">
+    <div class="section-inner">
+      <h2 class="section-title">公告栏</h2>
+      <p class="section-subtitle">班级重要通知</p>
+      <div class="notice-list" id="notice-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ 成员墙 ============ -->
+  <section id="members">
+    <div class="section-inner">
+      <h2 class="section-title">班级成员</h2>
+      <p class="section-subtitle">22个独一无二的名字，组成我们最好的班级</p>
+      <div class="student-wall" id="student-wall"></div>
+    </div>
+  </section>
+
+  <!-- ============ 照片相册 ============ -->
+  <section id="photos">
+    <div class="section-inner">
+      <h2 class="section-title">回忆相册</h2>
+      <p class="section-subtitle">点击照片可放大浏览，左右切换查看</p>
+      <div class="album-grid" id="album-grid"></div>
+    </div>
+  </section>
+
+  <!-- ============ 视频集锦 ============ -->
+  <section id="videos">
+    <div class="section-inner">
+      <h2 class="section-title">视频集锦</h2>
+      <p class="section-subtitle">那些值得珍藏的动感瞬间</p>
+      <div class="video-grid" id="video-grid"></div>
+    </div>
+  </section>
+
+  <!-- ============ 回忆时间轴 ============ -->
+  <section id="timeline">
+    <div class="section-inner">
+      <h2 class="section-title">回忆时间轴</h2>
+      <p class="section-subtitle">我们一起走过的日子</p>
+      <div class="timeline" id="timeline"></div>
+    </div>
+  </section>
+
+  <!-- ============ 文件分享 ============ -->
+  <section id="files">
+    <div class="section-inner">
+      <h2 class="section-title">文件分享</h2>
+      <p class="section-subtitle">奖状、作文集、纪念册……点此下载</p>
+      <div class="file-list" id="file-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ 页脚 ============ -->
+  <footer class="footer">
+    <p>大对勾托管中心 · 2026级 · 永远的班级</p>
+    <p style="margin-top:0.3rem">青春不散场，我们更高处见 💪</p>
+  </footer>
+
+  <!-- 回到顶部 -->
+  <button class="back-top" id="back-top" aria-label="回到顶部" title="回到顶部">↑</button>
+
+  <!-- 隐蔽解密入口 -->
+  <div class="secret-entry">
+    <button class="secret-btn" id="secret-entry-btn" data-tip="" aria-label="秘密入口">✉</button>
+  </div>
+
+  <!-- ============ JS ============ -->
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // 初始化页面文字（从配置动态填入）
+    (function() {
+      var cfg = CLASS_CONFIG;
+
+      // 班主任寄语
+      var msgEl = document.getElementById('message-text');
+      var sigEl = document.getElementById('message-signature');
+      if (msgEl) msgEl.textContent = cfg.teacherMessage;
+      if (sigEl) sigEl.textContent = '—— ' + cfg.teacherName;
+
+      // 视频列表
+      var videoGrid = document.getElementById('video-grid');
+      if (videoGrid) {
+        videoGrid.innerHTML = cfg.videos.map(function(v) {
+          return '<div class="video-card">' +
+            '<video src="' + v.url + '" poster="' + v.poster + '" controls preload="none"></video>' +
+            '<div class="video-title">' + v.title + '</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      // 文件列表
+      var fileList = document.getElementById('file-list');
+      if (fileList) {
+        fileList.innerHTML = cfg.files.map(function(f) {
+          return '<div class="file-item">' +
+            '<div class="file-icon">📄</div>' +
+            '<div class="file-info">' +
+              '<div class="file-name">' + f.name + '</div>' +
+              '<div class="file-meta">.' + f.type + ' · ' + f.size + '</div>' +
+            '</div>' +
+            '<a href="' + f.url + '" class="file-download" download>下载</a>' +
+          '</div>';
+        }).join('');
+      }
+    })();
+  </script>
+
+</body>
+</html>

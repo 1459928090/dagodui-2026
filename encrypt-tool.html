@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教师加密工具 — 大对勾托管中心2026级</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="tool-container">
+    <h1>🔐 教师加密工具</h1>
+    <p class="subtitle">为大对勾2026级的孩子们生成时光信件密文</p>
+
+    <!-- 密钥确认 -->
+    <div class="tool-card">
+      <h3>当前加密密钥</h3>
+      <div style="display:flex;gap:0.5rem;align-items:center">
+        <input type="text" class="tool-input" id="key-display" readonly
+               style="font-family:monospace;font-size:0.85rem;background:#f8f8f8">
+        <button class="tool-btn secondary" id="toggle-key" style="flex-shrink:0">显示</button>
+      </div>
+      <p style="color:var(--text-muted);font-size:0.8rem;margin-top:0.5rem">
+        ⚠ 此密钥必须与 config.js 中的 encryptKey 保持一致。如需修改，请在两边同步更新。
+      </p>
+    </div>
+
+    <!-- 单个加密 -->
+    <div class="tool-card">
+      <h3>单个信件加密</h3>
+      <div class="tool-row">
+        <input type="text" class="tool-input" id="student-name" placeholder="学生姓名（如：张伟）">
+      </div>
+      <textarea class="tool-textarea" id="letter-content" placeholder="信件正文……&#10;&#10;例如：&#10;还记得初一你第一次举手回答问题的样子，那时的你害羞又勇敢……三年过去，你已经成长为一个自信优秀的少年。愿你前程似锦，未来可期！"></textarea>
+      <div style="display:flex;gap:0.8rem;margin-top:1rem;flex-wrap:wrap">
+        <button class="tool-btn" id="encrypt-single">加密生成密文</button>
+        <button class="tool-btn secondary" id="copy-single" disabled>复制密文</button>
+      </div>
+      <div class="tool-output" id="single-output" style="display:none"></div>
+    </div>
+
+    <!-- 批量加密 -->
+    <div class="tool-card">
+      <h3>批量加密</h3>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem">
+        每行一个学生，格式：<code>姓名|信件内容</code><br>
+        示例：<code>张伟|还记得你第一次举手的样子……</code>
+      </p>
+      <textarea class="tool-textarea" id="batch-input" placeholder="张伟|你的信的内容……&#10;李娜|你的信的内容……&#10;王芳|你的信的内容……"></textarea>
+      <div style="display:flex;gap:0.8rem;margin-top:1rem;flex-wrap:wrap">
+        <button class="tool-btn" id="encrypt-batch">批量生成密文</button>
+        <button class="tool-btn secondary" id="copy-all" disabled>复制全部密文</button>
+        <button class="tool-btn secondary" id="download-all" disabled>下载密文文件</button>
+      </div>
+      <div id="batch-output" style="margin-top:1rem"></div>
+    </div>
+
+    <!-- 使用说明 -->
+    <div class="tool-card" style="background:var(--gold-light);border:1px solid var(--gold)">
+      <h3>📋 使用说明</h3>
+      <ol style="padding-left:1.2rem;color:var(--text-light);font-size:0.9rem;line-height:2">
+        <li>确认上方<strong>加密密钥</strong>与 config.js 中一致</li>
+        <li>输入学生姓名和信件内容，点击「加密生成密文」</li>
+        <li>复制生成的密文，发给对应学生</li>
+        <li>学生访问网站 → 点击右下角信封图标 → 输入班级密码 → 粘贴密文 → 解密阅读</li>
+        <li>批量加密功能可一次生成全班信件</li>
+      </ol>
+    </div>
+
+    <div style="text-align:center;margin-top:2rem">
+      <a href="index.html" class="letter-back">← 返回班级主页</a>
+    </div>
+  </div>
+
+  <!-- CryptoJS 本地加载，无需外网 -->
+  <script src="js/crypto-js.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/encrypt.js"></script>
+</body>
+</html>

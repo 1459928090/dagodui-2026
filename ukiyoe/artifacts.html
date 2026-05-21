@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>风物志 — 班级浮世绘</title>
+  <link rel="stylesheet" href="css/ukiyoe.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo"><a href="index.html">🎨 班级浮世绘</a></div>
+      <button class="nav-toggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="index.html">浮世绘</a></li>
+        <li><a href="characters.html">人物</a></li>
+        <li><a href="spaces.html">空间</a></li>
+        <li><a href="timeline.html">时间</a></li>
+        <li><a href="artifacts.html" class="active">风物</a></li>
+        <li><a href="../index.html">← 回主站</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <h1>🏺 风物志</h1>
+    <p class="section-subtitle">消失的日常文物与只有我们听得懂的语言</p>
+  </section>
+
+  <!-- Tabs -->
+  <div class="tabs" id="main-tabs">
+    <button class="tab-btn active" data-tab="museum">🏛 班级博物馆</button>
+    <button class="tab-btn" data-tab="slang">📖 暗号与梗百科</button>
+  </div>
+
+  <!-- Tab 1: 班级博物馆 -->
+  <section class="section-inner tab-panel active" id="tab-museum" style="padding-top:0">
+    <p class="section-subtitle">每件物品都承载着只有我们才懂的故事</p>
+
+    <div class="artifact-grid" id="artifact-grid">
+      <!-- JS渲染 -->
+    </div>
+
+    <!-- 上传文物 -->
+    <div class="submit-section" style="margin-top:3rem">
+      <h4>📸 上新 — 给博物馆捐赠一件文物</h4>
+      <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.8rem">提示：此物见证了本班第一次也是最后一次蟑螂恐慌事件 →</div>
+      <input type="text" id="new-artifact-name" placeholder="文物名称" maxlength="30">
+      <input type="text" id="new-artifact-category" placeholder="类别，如：照片 / 物品 / 作品 / 荣誉" maxlength="20">
+      <textarea id="new-artifact-desc" placeholder="解说文字：它为什么是文物？它见证了什么？" maxlength="300" style="width:100%;min-height:80px;margin-bottom:0.8rem"></textarea>
+      <input type="text" id="new-artifact-image" placeholder="照片链接" maxlength="200">
+      <input type="text" id="new-artifact-contributor" placeholder="你的名字（选填）" maxlength="10">
+      <button class="btn btn-primary btn-sm" id="new-artifact-submit" style="margin-top:0.5rem">提交文物</button>
+    </div>
+
+    <!-- 文物详情弹窗 -->
+    <div class="modal-overlay" id="artifact-modal" style="display:none">
+      <div class="modal-content">
+        <button class="modal-close" id="artifact-modal-close">&times;</button>
+        <img id="artifact-modal-img" style="width:100%;max-height:300px;object-fit:cover;border-radius:var(--radius-sm);margin-bottom:1rem;background:var(--gold-light)" src="" alt="">
+        <h3 id="artifact-modal-name"></h3>
+        <div style="font-size:0.85rem;color:var(--primary);margin-bottom:0.8rem" id="artifact-modal-category"></div>
+        <p style="line-height:1.7" id="artifact-modal-desc"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab 2: 暗号与梗百科 -->
+  <section class="section-inner tab-panel" id="tab-slang" style="padding-top:0">
+    <p class="section-subtitle">外人慎入，这是我们的语言密码。</p>
+    <p style="text-align:center;font-size:0.82rem;color:var(--text-muted);margin-bottom:2rem">🔒 以下词汇仅供内部人员理解，外人看不懂别怪我们</p>
+
+    <div class="slang-grid" id="slang-grid">
+      <!-- JS渲染 -->
+    </div>
+
+    <!-- 创建词条 -->
+    <div class="submit-section" style="margin-top:3rem">
+      <h4>📝 创建新词条</h4>
+      <input type="text" id="new-slang-term" placeholder="词条名" maxlength="20">
+      <textarea id="new-slang-def" placeholder="释义" maxlength="200" style="width:100%;min-height:60px;margin-bottom:0.5rem"></textarea>
+      <input type="text" id="new-slang-example" placeholder="例句（选填）" maxlength="100">
+      <input type="text" id="new-slang-contributor" placeholder="你的名字（选填）" maxlength="10">
+      <button class="btn btn-primary btn-sm" id="new-slang-submit" style="margin-top:0.5rem">提交词条</button>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>🎨 班级浮世绘 · 大对勾托管中心2026级</p>
+    <p style="margin-top:0.3rem">物会消失，话会忘记，但浮世绘替我们记得。</p>
+  </footer>
+
+  <button class="back-top" id="back-top" aria-label="回到顶部">↑</button>
+
+  <script src="js/config.js"></script>
+  <script src="js/lc-init.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/artifacts.js"></script>
+</body>
+</html>

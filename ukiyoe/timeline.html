@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>时间线 — 班级浮世绘</title>
+  <link rel="stylesheet" href="css/ukiyoe.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo"><a href="index.html">🎨 班级浮世绘</a></div>
+      <button class="nav-toggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="index.html">浮世绘</a></li>
+        <li><a href="characters.html">人物</a></li>
+        <li><a href="spaces.html">空间</a></li>
+        <li><a href="timeline.html" class="active">时间</a></li>
+        <li><a href="artifacts.html">风物</a></li>
+        <li><a href="../index.html">← 回主站</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <h1>⏳ 时间线</h1>
+    <p class="section-subtitle">我们共同的脉搏。每一个今天，都曾是某人的昨天。</p>
+  </section>
+
+  <!-- Tabs -->
+  <div class="tabs" id="main-tabs">
+    <button class="tab-btn active" data-tab="on-this-day">📜 那年今日</button>
+    <button class="tab-btn" data-tab="mood">🌤 心情气象站</button>
+  </div>
+
+  <!-- Tab 1: 那年今日 + 事件录入 -->
+  <section class="section-inner tab-panel active" id="tab-on-this-day" style="padding-top:0">
+
+    <!-- 今天日期标识 -->
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="font-family:var(--font-serif);font-size:1.3rem;color:var(--primary);font-weight:700" id="today-label"></div>
+      <p style="color:var(--text-muted);font-size:0.85rem">看看往年的今天都发生了什么</p>
+    </div>
+
+    <!-- 匹配结果 -->
+    <div class="timeline" id="on-this-day-timeline">
+      <!-- JS渲染 -->
+    </div>
+
+    <!-- 事件录入 -->
+    <div class="submit-section" style="margin-top:3rem">
+      <h4>📝 添加你的时间线条目</h4>
+      <div class="form-row" style="margin-bottom:0.5rem">
+        <input type="date" id="event-date" style="flex:1">
+        <select id="event-type" style="flex:1;padding:0.55rem 0.8rem;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:0.9rem">
+          <option value="class">班级事件</option>
+          <option value="personal">个人记忆</option>
+        </select>
+      </div>
+      <textarea id="event-content" placeholder="写下你的记忆……" maxlength="200" style="width:100%;min-height:70px;margin-bottom:0.8rem"></textarea>
+      <input type="text" id="event-author" placeholder="你的名字（选填）" maxlength="10">
+      <button class="btn btn-primary btn-sm" id="event-submit" style="margin-top:0.5rem">提交条目</button>
+    </div>
+  </section>
+
+  <!-- Tab 2: 心情气象站 -->
+  <section class="section-inner tab-panel" id="tab-mood" style="padding-top:0">
+
+    <p class="section-subtitle">每天投一票，看看全班的心情云图</p>
+
+    <!-- 今日投票 -->
+    <div class="mood-grid" id="mood-buttons">
+      <!-- JS渲染 -->
+    </div>
+
+    <!-- 留言输入 -->
+    <div id="mood-message-area" style="text-align:center;display:none;margin-bottom:1rem">
+      <input type="text" id="mood-message" placeholder="想说什么？（选填）" maxlength="30"
+        style="width:100%;max-width:320px;padding:0.5rem 0.8rem;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:0.9rem">
+      <button class="btn btn-sm btn-primary" id="mood-message-submit" style="margin-left:0.5rem">发送</button>
+    </div>
+
+    <!-- 今日统计 -->
+    <div style="text-align:center;margin:1.5rem 0;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap" id="today-stats">
+    </div>
+
+    <!-- 周趋势图 -->
+    <h3 style="text-align:center;margin:2rem 0 0.5rem">📊 本周心情趋势</h3>
+    <p style="text-align:center;font-size:0.8rem;color:var(--text-muted)">柱状图高度代表不同心情出现次数</p>
+    <div class="mood-chart" id="mood-chart">
+      <p style="text-align:center;width:100%;color:var(--text-muted);padding-top:3rem">正在加载……</p>
+    </div>
+
+    <!-- 最近留言 -->
+    <h3 style="text-align:center;margin:2.5rem 0 1rem">💬 今日心情留言</h3>
+    <div id="mood-messages-list" style="max-width:500px;margin:0 auto">
+      <!-- JS渲染 -->
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>🎨 班级浮世绘 · 大对勾托管中心2026级</p>
+    <p style="margin-top:0.3rem">时间在流逝，我们在生长。</p>
+  </footer>
+
+  <button class="back-top" id="back-top" aria-label="回到顶部">↑</button>
+
+  <script src="js/config.js"></script>
+  <script src="js/lc-init.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/timeline.js"></script>
+</body>
+</html>

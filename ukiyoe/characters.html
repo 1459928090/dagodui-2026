@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>人物群像 — 班级浮世绘</title>
+  <link rel="stylesheet" href="css/ukiyoe.css">
+</head>
+<body>
+
+  <!-- ============ 导航栏 ============ -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo"><a href="index.html">🎨 班级浮世绘</a></div>
+      <button class="nav-toggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="index.html">浮世绘</a></li>
+        <li><a href="characters.html" class="active">人物</a></li>
+        <li><a href="spaces.html">空间</a></li>
+        <li><a href="timeline.html">时间</a></li>
+        <li><a href="artifacts.html">风物</a></li>
+        <li><a href="../index.html">← 回主站</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ============ Hero ============ -->
+  <section class="page-hero">
+    <h1>👥 人物群像</h1>
+    <p class="section-subtitle">22个名字，22个世界。每个人都是这段故事的主角。</p>
+  </section>
+
+  <!-- ============ Tabs ============ -->
+  <div class="tabs" id="main-tabs">
+    <button class="tab-btn active" data-tab="impressions">📝 人物印象</button>
+    <button class="tab-btn" data-tab="awards">🏆 趣味之最</button>
+    <button class="tab-btn" data-tab="desks">🪑 同桌编年史</button>
+  </div>
+
+  <!-- ============ Tab 1: 人物印象 ============ -->
+  <section class="section-inner tab-panel active" id="tab-impressions" style="padding-top:0">
+
+    <!-- 学生列表视图 -->
+    <div id="student-list-view">
+      <p class="section-subtitle">点击头像进入专属印象页，写下你心中TA的样子</p>
+      <div class="student-grid" id="student-grid">
+        <!-- JS渲染 -->
+      </div>
+    </div>
+
+    <!-- 单个学生印象详情视图 (隐藏) -->
+    <div id="student-detail-view" style="display:none">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <button class="btn btn-outline btn-sm" id="back-to-list">← 返回全班列表</button>
+      </div>
+
+      <div style="text-align:center;margin-bottom:2rem">
+        <div class="student-avatar" style="width:80px;height:80px;font-size:2rem;margin:0 auto 0.5rem" id="detail-avatar"></div>
+        <h2 id="detail-name" style="margin-bottom:0.2rem"></h2>
+        <p style="color:var(--text-muted);font-size:0.85rem">已有 <span id="detail-count">0</span> 条印象</p>
+      </div>
+
+      <!-- 同桌编年史 (个人页嵌入) -->
+      <div class="card" style="margin-bottom:2rem" id="detail-desk-section">
+        <h4 style="margin-bottom:0.8rem">🪑 同桌编年史</h4>
+        <div class="desk-timeline" id="detail-desk-timeline">
+          <p class="empty-state"><span class="empty-icon">📝</span>还没人记录过TA的同桌史，来写第一条吧</p>
+        </div>
+      </div>
+
+      <!-- 提交印象 -->
+      <div class="impression-form" id="impression-form">
+        <h4 style="margin-bottom:0.5rem">💬 留下你的印象碎片</h4>
+        <p class="hint">
+          <span class="bad">❌ "他是个乐于助人的人"</span><br>
+          <span class="good">✅ "每次我搬不动水桶，都是他二话不说接过去"</span>
+        </p>
+        <textarea id="impression-input" placeholder="写下一件让你记住TA的具体小事……（30-100字）" maxlength="100"></textarea>
+        <div class="form-row" style="margin-top:0.8rem">
+          <input type="text" id="impression-author" placeholder="你的名字（留空则匿名）" maxlength="10">
+          <button class="btn btn-primary" id="impression-submit">提交印象</button>
+        </div>
+      </div>
+
+      <!-- 印象列表 -->
+      <div class="impression-list" id="impression-list" style="margin-top:2rem">
+        <!-- JS渲染 -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Tab 2: 趣味之最 ============ -->
+  <section class="section-inner tab-panel" id="tab-awards" style="padding-top:0">
+    <p class="section-subtitle">不是"三好学生"，而是真正让我们会心一笑的"全班之最"</p>
+
+    <div class="award-grid" id="award-grid">
+      <!-- JS渲染 -->
+    </div>
+
+    <!-- 自定义称号提交 -->
+    <div class="submit-section" style="margin-top:3rem">
+      <h4>✨ 提交新的趣味称号</h4>
+      <input type="text" id="new-award-title" placeholder="称号名称，如：'数学作业写得最快的人'" maxlength="40">
+      <button class="btn btn-primary btn-sm" id="new-award-submit">提交新称号</button>
+    </div>
+
+    <!-- 提名弹窗 -->
+    <div class="modal-overlay" id="nominate-modal" style="display:none">
+      <div class="modal-content">
+        <button class="modal-close" id="nominate-close">&times;</button>
+        <h3 style="margin-bottom:1rem">🏆 提名</h3>
+        <p style="margin-bottom:0.8rem;font-weight:700" id="nominate-title-text"></p>
+        <select id="nominate-student" style="width:100%;padding:0.5rem;margin-bottom:0.8rem;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:0.9rem">
+          <option value="">选择同学……</option>
+        </select>
+        <textarea id="nominate-evidence" placeholder="为什么提名TA？（写具体事件）" style="width:100%;min-height:80px;padding:0.6rem;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:0.9rem;margin-bottom:0.8rem" maxlength="150"></textarea>
+        <button class="btn btn-primary" id="nominate-submit">提交提名</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Tab 3: 同桌编年史 ============ -->
+  <section class="section-inner tab-panel" id="tab-desks" style="padding-top:0">
+    <p class="section-subtitle">记录你坐过的每一任同桌，那些被座位绑定的微小回忆</p>
+
+    <!-- 录入表单 -->
+    <div class="submit-section" style="margin-bottom:2rem">
+      <h4>📝 添加同桌记忆</h4>
+      <input type="text" id="desk-self" placeholder="你的名字" maxlength="10" style="margin-bottom:0.5rem">
+      <input type="text" id="desk-mate" placeholder="同桌的名字" maxlength="10" style="margin-bottom:0.5rem">
+      <div class="form-row" style="margin-bottom:0.5rem">
+        <input type="text" id="desk-period" placeholder="时间段，如：2024.09-2025.01" style="flex:1">
+      </div>
+      <textarea id="desk-memory" placeholder="一个关于TA的微小记忆……" maxlength="100" style="width:100%;min-height:60px;margin-bottom:0.8rem"></textarea>
+      <button class="btn btn-primary btn-sm" id="desk-submit">提交记录</button>
+    </div>
+
+    <!-- 全班时间线展示 -->
+    <h3 style="text-align:center;margin-bottom:1.5rem">🪑 全班同桌编年史</h3>
+    <div class="desk-timeline" id="all-desk-timeline">
+      <p class="empty-state"><span class="empty-icon">📝</span>还没有同桌记录，来写第一条吧</p>
+    </div>
+  </section>
+
+  <!-- ============ 页脚 ============ -->
+  <footer class="footer">
+    <p>🎨 班级浮世绘 · 大对勾托管中心2026级</p>
+    <p style="margin-top:0.3rem">每个人都是独一无二的主角</p>
+  </footer>
+
+  <button class="back-top" id="back-top" aria-label="回到顶部">↑</button>
+
+  <script src="js/config.js"></script>
+  <script src="js/lc-init.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/characters.js"></script>
+</body>
+</html>
