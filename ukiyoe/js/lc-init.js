@@ -7,6 +7,12 @@ const DB = (function() {
   const cfg = UKIYOE_CONFIG.tcb;
   const useTCB = cfg.envId && cfg.envId.trim() !== "";
 
+  function getSDK() {
+    if (typeof cloudbase !== "undefined") return cloudbase;
+    if (typeof tcb !== "undefined") return tcb;
+    return null;
+  }
+
   // ========== LocalStorage 实现 ==========
   const LS = {
     _getTable: function(name) {
@@ -57,7 +63,8 @@ const DB = (function() {
     init: function() {
       if (this._ready) return;
       if (this._initPromise) return this._initPromise;
-      if (typeof tcb === "undefined") {
+      var sdk = getSDK();
+      if (!sdk) {
         console.warn("CloudBase SDK 未加载，使用本地存储模式");
         return;
       }
@@ -65,15 +72,17 @@ const DB = (function() {
       var self = this;
       this._initPromise = (async function() {
         try {
-          var app = await tcb.init({ env: cfg.envId });
-          self._db = await app.database();
+          var app = sdk.init({ env: cfg.envId });
+          if (app && typeof app.then === "function") app = await app;
           var auth = app.auth({ persistence: "local" });
           var loginState = await auth.getLoginState();
           if (!loginState) {
             await auth.signInAnonymously();
           }
+          self._db = app.database();
+          if (self._db && typeof self._db.then === "function") self._db = await self._db;
           self._ready = true;
-          console.log("CloudBase 已连接");
+          console.log("CloudBase 已连接，db=" + typeof self._db + " keys=" + (self._db ? Object.keys(self._db).slice(0,5).join(",") : "none"));
         } catch(e) {
           console.error("CloudBase 初始化失败:", e);
           throw e;
@@ -119,9 +128,13 @@ const DB = (function() {
   // ========== 统一接口（自动降级） ==========
   var _useLS = false;
 
+  function sdkAvailable() {
+    return useTCB && getSDK() !== null;
+  }
+
   function auto(fnName) {
     return function() {
-      if (_useLS || !useTCB || typeof tcb === "undefined") {
+      if (_useLS || !sdkAvailable()) {
         return LS[fnName].apply(LS, arguments);
       }
       var args = arguments;
@@ -145,7 +158,7 @@ const DB = (function() {
         console.error("localStorage 不可用! 请用 http:// 访问而非 file://", e);
       }
 
-      if (!useTCB || typeof tcb === "undefined") {
+      if (!sdkAvailable()) {
         console.log("存储层就绪: 本地存储（未配置 CloudBase）");
         return;
       }
@@ -165,7 +178,7 @@ const DB = (function() {
     count:   auto("count"),
 
     hasTodayRecord: async function(table, author) {
-      if (_useLS || !useTCB || typeof tcb === "undefined") {
+      if (_useLS || !sdkAvailable()) {
         var today = new Date().toISOString().slice(0, 10);
         var records = await LS.query(table, function(r) {
           return r.author === author && r.createdAt && r.createdAt.slice(0, 10) === today;
