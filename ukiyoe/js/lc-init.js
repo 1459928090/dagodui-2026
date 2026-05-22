@@ -65,7 +65,7 @@ const DB = (function() {
       var self = this;
       this._initPromise = (async function() {
         try {
-          var app = tcb.init({ env: cfg.envId });
+          var app = await tcb.init({ env: cfg.envId });
           self._db = app.database();
           var auth = app.auth({ persistence: "local" });
           var loginState = await auth.getLoginState();
