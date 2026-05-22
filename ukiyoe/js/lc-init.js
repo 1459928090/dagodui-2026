@@ -1,6 +1,5 @@
 // ============================================================
 // 班级浮世绘 — 数据存储层 (CloudBase 云开发 + localStorage 降级)
-// 部署于 CloudBase 静态托管，同源无安全域名限制
 // ============================================================
 
 const DB = (function() {
@@ -54,92 +53,77 @@ const DB = (function() {
     }
   };
 
-  // ========== CloudBase SDK 实现 ==========
-  const TCB = {
-    _ready: false,
-    _db: null,
-    _initPromise: null,
+  // ========== CloudBase 实现 ==========
+  var _db = null;
+  var _ready = false;
+  var _initPromise = null;
 
-    init: function() {
-      if (this._ready) return;
-      if (this._initPromise) return this._initPromise;
-      var sdk = getSDK();
-      if (!sdk) {
-        console.warn("CloudBase SDK 未加载，使用本地存储模式");
-        return;
-      }
+  function initTCB() {
+    if (_ready) return Promise.resolve();
+    if (_initPromise) return _initPromise;
+    var sdk = getSDK();
+    if (!sdk) return;
 
-      var self = this;
-      this._initPromise = (async function() {
-        try {
-          var app = sdk.init({ env: cfg.envId });
-          if (app && typeof app.then === "function") app = await app;
-          var auth = app.auth({ persistence: "local" });
-          var loginState = await auth.getLoginState();
-          if (!loginState) {
-            await auth.signInAnonymously();
-          }
-          self._db = app.database();
-          if (self._db && typeof self._db.then === "function") self._db = await self._db;
-          self._ready = true;
-          console.log("CloudBase 已连接，db=" + typeof self._db + " keys=" + (self._db ? Object.keys(self._db).slice(0,5).join(",") : "none"));
-        } catch(e) {
-          console.error("CloudBase 初始化失败:", e);
-          throw e;
+    _initPromise = (async function() {
+      try {
+        var app = sdk.init({ env: cfg.envId });
+        if (app && typeof app.then === "function") app = await app;
+
+        var auth = app.auth({ persistence: "local" });
+        var loginState = await auth.getLoginState();
+        if (!loginState) {
+          await auth.signInAnonymously();
         }
-      })();
-      return this._initPromise;
-    },
 
-    save: async function(table, obj) {
-      var copy = {};
-      Object.keys(obj).forEach(function(k) { copy[k] = obj[k]; });
-      copy.createdAt = copy.createdAt || new Date().toISOString();
-      var res = await this._db.collection(table).add(copy);
-      copy.objectId = res.id;
-      copy._id = res.id;
-      return copy;
-    },
+        _db = app.database();
+        if (_db && typeof _db.then === "function") _db = await _db;
 
-    query: async function(table, filterFn) {
-      var res = await this._db.collection(table).limit(1000).get();
-      return (res.data || []).map(function(r) {
-        r.objectId = r._id;
-        return r;
-      }).filter(filterFn || function() { return true; });
-    },
-
-    update: async function(table, objectId, updates) {
-      await this._db.collection(table).doc(objectId).update(updates);
-      return updates;
-    },
-
-    delete_: async function(table, objectId) {
-      await this._db.collection(table).doc(objectId).remove();
-      return true;
-    },
-
-    count: async function(table) {
-      var res = await this._db.collection(table).count();
-      return res.total;
-    }
-  };
-
-  // ========== 统一接口（自动降级） ==========
-  var _useLS = false;
-
-  function sdkAvailable() {
-    return useTCB && getSDK() !== null;
+        _ready = true;
+        console.log("CloudBase 已连接 ✓");
+      } catch(e) {
+        console.error("CloudBase 初始化失败:", e);
+        throw e;
+      }
+    })();
+    return _initPromise;
   }
+
+  // ========== 统一接口 ==========
+  var _useLS = false;
 
   function auto(fnName) {
     return function() {
-      if (_useLS || !sdkAvailable()) {
+      if (_useLS || !useTCB || !getSDK()) {
         return LS[fnName].apply(LS, arguments);
       }
       var args = arguments;
-      return TCB.init().then(function() {
-        return TCB[fnName].apply(TCB, args);
+      return initTCB().then(function() {
+        if (!_db) throw new Error("数据库未就绪");
+        switch(fnName) {
+          case "save": {
+            var copy = {};
+            Object.keys(args[1]).forEach(function(k) { copy[k] = args[1][k]; });
+            copy.createdAt = copy.createdAt || new Date().toISOString();
+            return _db.collection(args[0]).add(copy).then(function(res) {
+              copy.objectId = res.id;
+              copy._id = res.id;
+              return copy;
+            });
+          }
+          case "query":
+            return _db.collection(args[0]).limit(1000).get().then(function(res) {
+              return (res.data || []).map(function(r) {
+                r.objectId = r._id; return r;
+              }).filter(args[1] || function() { return true; });
+            });
+          case "update":
+            return _db.collection(args[0]).doc(args[1]).update(args[2]).then(function() { return args[2]; });
+          case "delete_":
+            return _db.collection(args[0]).doc(args[1]).remove().then(function() { return true; });
+          case "count":
+            return _db.collection(args[0]).count().then(function(res) { return res.total; });
+          default: throw new Error("未知: " + fnName);
+        }
       }).catch(function(e) {
         console.warn("CloudBase 操作失败，降级到本地存储:", e.message);
         _useLS = true;
@@ -155,19 +139,18 @@ const DB = (function() {
         localStorage.setItem(testKey, "1");
         localStorage.removeItem(testKey);
       } catch(e) {
-        console.error("localStorage 不可用! 请用 http:// 访问而非 file://", e);
+        console.error("localStorage 不可用!");
       }
 
-      if (!sdkAvailable()) {
-        console.log("存储层就绪: 本地存储（未配置 CloudBase）");
+      if (!useTCB || !getSDK()) {
+        console.log("存储层就绪: 本地存储");
         return;
       }
-      var self = this;
-      TCB.init().then(function() {
+      initTCB().then(function() {
         console.log("存储层就绪: CloudBase 云开发");
       }).catch(function(e) {
         _useLS = true;
-        console.log("存储层就绪: 本地存储（CloudBase 连接失败:", e.message, "）");
+        console.log("存储层就绪: 本地存储（CloudBase 失败:", e.message, "）");
       });
     },
 
@@ -178,7 +161,7 @@ const DB = (function() {
     count:   auto("count"),
 
     hasTodayRecord: async function(table, author) {
-      if (_useLS || !sdkAvailable()) {
+      if (_useLS || !useTCB || !getSDK()) {
         var today = new Date().toISOString().slice(0, 10);
         var records = await LS.query(table, function(r) {
           return r.author === author && r.createdAt && r.createdAt.slice(0, 10) === today;
@@ -186,8 +169,9 @@ const DB = (function() {
         return records.length > 0;
       }
       try {
-        await TCB.init();
-        var res = await TCB._db.collection(table).where({ author: author }).limit(1000).get();
+        await initTCB();
+        if (!_db) throw new Error("db not ready");
+        var res = await _db.collection(table).where({ author: author }).limit(1000).get();
         var today = new Date().toISOString().slice(0, 10);
         var count = (res.data || []).filter(function(r) {
           return r.createdAt && r.createdAt.slice(0, 10) === today;
