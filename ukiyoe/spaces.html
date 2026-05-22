@@ -40,18 +40,34 @@
   <section class="section-inner tab-panel active" id="tab-seats" style="padding-top:0">
     <p class="section-subtitle">点击座位看看那里发生过什么故事</p>
 
+    <!-- 讲台标记 -->
+    <div style="text-align:center;font-size:0.75rem;color:var(--text-muted);letter-spacing:0.3em;margin-bottom:0.3rem">⬆ 讲 台 ⬆</div>
+
+    <!-- 列分组标签 -->
+    <div id="seat-group-labels" style="display:flex;justify-content:center;gap:4px;font-size:0.7rem;color:var(--text-muted);margin-bottom:2px">
+      <!-- JS渲染 -->
+    </div>
+
     <div class="seat-map-container">
-      <div class="seat-grid" id="seat-grid" style="display:grid;gap:0.6rem;justify-content:center">
+      <div class="seat-grid" id="seat-grid">
         <!-- JS渲染 -->
       </div>
     </div>
 
-    <div style="text-align:center;margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted)">
-      🟤 浅色 = 空位 · 白色 = 已坐人 · 点击查看记忆碎片
+    <!-- 后门标记 -->
+    <div style="text-align:center;font-size:0.75rem;color:var(--text-muted);letter-spacing:0.3em;margin-top:0.3rem">⬇ 后 门 ⬇</div>
+
+    <div style="text-align:center;margin-top:0.8rem">
+      <div style="display:inline-flex;align-items:center;gap:0.6rem;flex-wrap:wrap;justify-content:center;font-size:0.78rem;color:var(--text-muted)">
+        <span>🧊 冷门座位</span>
+        <span style="width:80px;height:10px;border-radius:5px;background:linear-gradient(to right, #f0dcc8, #e8a87c, #c75b39, #8b2510)"></span>
+        <span>🔥 故事最多 (<span id="heat-legend-max">-</span>)</span>
+      </div>
+      <div style="margin-top:0.3rem;font-size:0.75rem;color:var(--text-muted)">颜色越深 = 这个座位承载的记忆越多 · 点击格子查看详情和同学名</div>
     </div>
 
     <!-- 趣味标注图例 -->
-    <div style="display:flex;gap:1.5rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap;font-size:0.82rem">
+    <div style="display:flex;gap:1.5rem;justify-content:center;margin-top:1.2rem;flex-wrap:wrap;font-size:0.82rem">
       <span style="border-bottom:3px dashed #e87c5c">🍪 零食流转路线</span>
       <span style="border-bottom:3px dashed #7b9ec7">📋 纸条传递主干道</span>
       <span style="border-bottom:3px dashed #c7a45b">🚶 班主任巡逻路线</span>
@@ -65,9 +81,9 @@
         <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem" id="seat-modal-location"></p>
         <div id="seat-memories-list" style="margin-bottom:1.5rem"></div>
         <div class="submit-section" style="margin-top:1rem">
-          <h4>📝 为这个座位添加记忆</h4>
-          <input type="text" id="seat-memory-nickname" placeholder="给这个位置起个昵称" maxlength="20">
-          <textarea id="seat-memory-content" placeholder="这里发生过什么？" maxlength="150" style="width:100%;min-height:60px;margin-bottom:0.8rem"></textarea>
+          <h4>📝 为这个座位留下记忆</h4>
+          <input type="text" id="seat-memory-student" placeholder="谁坐过这里？（名字）" maxlength="10" style="margin-bottom:0.5rem">
+          <textarea id="seat-memory-content" placeholder="在这里发生过什么故事？" maxlength="150" style="width:100%;min-height:60px;margin-bottom:0.8rem"></textarea>
           <input type="text" id="seat-memory-author" placeholder="你的名字（选填）" maxlength="10">
           <button class="btn btn-primary btn-sm" id="seat-memory-submit" style="margin-top:0.5rem">提交记忆</button>
         </div>

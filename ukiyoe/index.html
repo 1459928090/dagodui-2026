@@ -28,7 +28,7 @@
 
   <!-- ============ Hero ============ -->
   <section class="hero">
-    <div class="hero-badge">ukiyoe · v1.0</div>
+    <div class="hero-badge">大对勾2026级 · 班级浮世绘</div>
     <h1>班级<span class="highlight">浮世绘</span></h1>
     <p class="hero-subtitle">浮世，短暂而鲜活的人间；绘，描绘记录。<br>一幅用细节编织的「班级清明上河图」</p>
   </section>
@@ -76,6 +76,52 @@
     </p>
   </section>
 
+  <!-- ============ 浮世绘数据仪表盘 ============ -->
+  <section class="section-inner">
+    <h2 class="section-title">📊 浮世绘数据</h2>
+    <p class="section-subtitle">我们共同书写的记忆，每一笔都算数</p>
+    <div class="stats-dash" id="stats-dash">
+      <div class="stat-item">
+        <span class="stat-num" id="stat-impressions">-</span>
+        <span class="stat-label">印象碎片</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-timeline">-</span>
+        <span class="stat-label">时间线条目</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-artifacts">-</span>
+        <span class="stat-label">馆藏文物</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-slangs">-</span>
+        <span class="stat-label">暗号词条</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-hideouts">-</span>
+        <span class="stat-label">秘密据点</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-moods">-</span>
+        <span class="stat-label">心情投票</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 随机翻牌 ============ -->
+  <section class="section-inner" style="padding-top:0">
+    <h2 class="section-title">🎴 随机翻牌</h2>
+    <p class="section-subtitle">不知道看谁？让浮世绘帮你选一位幸运同学</p>
+    <div class="random-picker" id="random-picker">
+      <div class="picker-display" id="picker-display">
+        <div class="picker-avatar" id="picker-avatar">?</div>
+        <div class="picker-name" id="picker-name">点击下方按钮</div>
+      </div>
+      <button class="btn btn-primary" id="picker-btn" style="font-size:1rem;padding:0.7rem 2rem">🎲 随机翻牌</button>
+      <a id="picker-link" href="#" style="display:none;margin-top:0.5rem;font-size:0.9rem">去看看TA的印象页 →</a>
+    </div>
+  </section>
+
   <!-- ============ 页脚 ============ -->
   <footer class="footer">
     <p>🎨 班级浮世绘 · 大对勾托管中心2026级</p>
@@ -95,31 +141,30 @@
   <script>
     // ========== 首页专属逻辑 ==========
     (function() {
-      var cfg = UKIYOE_CONFIG;
+      const cfg = UKIYOE_CONFIG;
 
       // 那年今日 ticker
-      document.addEventListener("DOMContentLoaded", function() {
+      document.addEventListener("DOMContentLoaded", async function() {
         setupTicker();
 
         // 今日心情快捷投票
-        var moodGrid = document.getElementById("quick-mood");
+        const moodGrid = document.getElementById("quick-mood");
         if (moodGrid) {
           moodGrid.innerHTML = cfg.moodOptions.map(function(m) {
             return '<button class="mood-btn" data-mood="' + m.value + '" title="' + m.label + '">' +
               m.emoji + '<span class="mood-label">' + m.label + '</span></button>';
           }).join("");
 
-          // Check if already voted today
-          var voterName = localStorage.getItem("ukiyoe_nickname") || "anonymous";
+          const voterName = localStorage.getItem("ukiyoe_nickname") || "anonymous";
 
           moodGrid.querySelectorAll(".mood-btn").forEach(function(btn) {
             btn.addEventListener("click", async function() {
-              var already = await DB.hasTodayRecord("MoodVotes", voterName);
+              const already = await DB.hasTodayRecord("MoodVotes", voterName);
               if (already) {
                 showToast("你今天已经投过票啦，明天再来吧～");
                 return;
               }
-              var mood = this.dataset.mood;
+              const mood = this.dataset.mood;
               await DB.save("MoodVotes", {
                 date: new Date().toISOString().slice(0, 10),
                 mood: mood,
@@ -128,13 +173,106 @@
                 createdAt: new Date().toISOString()
               });
               showToast("心情已记录 " + (cfg.moodOptions.find(function(m){return m.value===mood})||{}).emoji || "");
-              // highlight selected
               moodGrid.querySelectorAll(".mood-btn").forEach(function(b){ b.classList.remove("selected"); });
               this.classList.add("selected");
+              // Refresh stats
+              loadStats();
             });
           });
         }
+
+        // 数据仪表盘
+        await loadStats();
+
+        // 随机翻牌
+        setupRandomPicker();
       });
+
+      // ========== 数据仪表盘 ==========
+      async function loadStats() {
+        const animateNum = function(el, target) {
+          if (!el) return;
+          const current = parseInt(el.textContent) || 0;
+          if (current === target) return;
+          const duration = 600;
+          const start = performance.now();
+          el.classList.add("counting");
+          function step(now) {
+            const p = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - p, 3); // ease-out
+            el.textContent = Math.round(current + (target - current) * eased);
+            if (p < 1) requestAnimationFrame(step);
+            else el.classList.remove("counting");
+          }
+          requestAnimationFrame(step);
+        };
+
+        try {
+          const impressions = await DB.query("Impressions");
+          animateNum(document.getElementById("stat-impressions"), impressions.length);
+        } catch(e) { document.getElementById("stat-impressions").textContent = "0"; }
+        try {
+          const timeline = await DB.query("Timeline");
+          animateNum(document.getElementById("stat-timeline"), timeline.length + cfg.presetTimeline.length);
+        } catch(e) { document.getElementById("stat-timeline").textContent = String(cfg.presetTimeline.length); }
+        try {
+          const artifacts = await DB.query("Artifacts");
+          animateNum(document.getElementById("stat-artifacts"), artifacts.length + cfg.artifacts.length);
+        } catch(e) { document.getElementById("stat-artifacts").textContent = String(cfg.artifacts.length); }
+        try {
+          const slangs = await DB.query("ClassSlang");
+          animateNum(document.getElementById("stat-slangs"), slangs.length + cfg.slangs.length);
+        } catch(e) { document.getElementById("stat-slangs").textContent = String(cfg.slangs.length); }
+        try {
+          const hideouts = await DB.query("Hideouts");
+          animateNum(document.getElementById("stat-hideouts"), hideouts.length + cfg.hideouts.length);
+        } catch(e) { document.getElementById("stat-hideouts").textContent = String(cfg.hideouts.length); }
+        try {
+          const moods = await DB.query("MoodVotes");
+          animateNum(document.getElementById("stat-moods"), moods.length);
+        } catch(e) { document.getElementById("stat-moods").textContent = "0"; }
+      }
+
+      // ========== 随机翻牌 ==========
+      function setupRandomPicker() {
+        const btn = document.getElementById("picker-btn");
+        const avatar = document.getElementById("picker-avatar");
+        const nameEl = document.getElementById("picker-name");
+        const display = document.getElementById("picker-display");
+        const link = document.getElementById("picker-link");
+        if (!btn) return;
+
+        btn.addEventListener("click", function() {
+          // Spin animation
+          display.classList.add("spinning");
+          btn.disabled = true;
+          btn.textContent = "🎰 正在翻牌……";
+
+          let count = 0;
+          const totalFlashes = 15;
+          const interval = setInterval(function() {
+            const idx = Math.floor(Math.random() * cfg.students.length);
+            const s = cfg.students[idx];
+            avatar.textContent = s.charAt(s.length - 1);
+            nameEl.textContent = s;
+            count++;
+            if (count >= totalFlashes) {
+              clearInterval(interval);
+              // Final pick
+              const finalIdx = Math.floor(Math.random() * cfg.students.length);
+              const finalStudent = cfg.students[finalIdx];
+              avatar.textContent = finalStudent.charAt(finalStudent.length - 1);
+              nameEl.textContent = finalStudent;
+              nameEl.style.color = "var(--primary)";
+              display.classList.remove("spinning");
+              btn.disabled = false;
+              btn.textContent = "🎲 再翻一次";
+              link.href = "characters.html?student=" + encodeURIComponent(finalStudent);
+              link.style.display = "inline-block";
+            }
+          }, 80);
+        });
+      }
     })();
   </script>
 

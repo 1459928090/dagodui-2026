@@ -14,7 +14,12 @@ const DB = (function() {
       } catch(e) { return []; }
     },
     _setTable(name, data) {
-      localStorage.setItem("ukiyoe_" + name, JSON.stringify(data));
+      try {
+        localStorage.setItem("ukiyoe_" + name, JSON.stringify(data));
+      } catch(e) {
+        console.error("localStorage 写入失败:", e);
+        showToast && showToast("保存失败，请检查浏览器存储空间");
+      }
     },
     save(table, obj) {
       const data = this._getTable(table);
@@ -133,7 +138,15 @@ const DB = (function() {
     init() {
       backend = getBackend();
       if (useLC) LC.init();
-      console.log("存储层就绪:", useLC && typeof AV !== "undefined" ? "Leancloud" : "本地存储");
+      // 诊断: 验证 localStorage 是否可用
+      try {
+        const testKey = "ukiyoe__diag";
+        localStorage.setItem(testKey, "1");
+        localStorage.removeItem(testKey);
+        console.log("存储层就绪: 本地存储 (正常)");
+      } catch(e) {
+        console.error("存储层就绪: 本地存储 (不可用! 请用 http:// 访问而非 file://)", e);
+      }
     },
 
     save(table, obj) { return backend.save(table, obj); },

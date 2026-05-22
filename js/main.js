@@ -23,8 +23,8 @@
 
   // ---- Navigation ----
   function initNav() {
-    var toggle = document.querySelector('.nav-toggle');
-    var links = document.querySelector('.nav-links');
+    const toggle = document.querySelector('.nav-toggle');
+    const links = document.querySelector('.nav-links');
     if (!toggle || !links) return;
 
     toggle.addEventListener('click', function () {
@@ -39,13 +39,13 @@
     });
 
     // Highlight active nav link on scroll
-    var sections = document.querySelectorAll('section[id]');
-    var navLinks = document.querySelectorAll('.nav-links a');
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-links a');
     window.addEventListener('scroll', function () {
-      var scrollY = window.pageYOffset;
+      const scrollY = window.pageYOffset;
       sections.forEach(function (sec) {
-        var top = sec.offsetTop - 100;
-        var bottom = top + sec.offsetHeight;
+        const top = sec.offsetTop - 100;
+        const bottom = top + sec.offsetHeight;
         if (scrollY >= top && scrollY < bottom) {
           navLinks.forEach(function (a) {
             a.classList.remove('active');
@@ -58,34 +58,34 @@
 
   // ---- Carousel ----
   function initCarousel() {
-    var track = document.querySelector('.carousel-track');
-    var prevBtn = document.querySelector('.carousel-btn.prev');
-    var nextBtn = document.querySelector('.carousel-btn.next');
-    var dotsContainer = document.querySelector('.carousel-dots');
+    const track = document.querySelector('.carousel-track');
+    const prevBtn = document.querySelector('.carousel-btn.prev');
+    const nextBtn = document.querySelector('.carousel-btn.next');
+    const dotsContainer = document.querySelector('.carousel-dots');
     if (!track || !prevBtn || !nextBtn) return;
 
-    var photos = CLASS_CONFIG.heroPhotos;
+    const photos = CLASS_CONFIG.heroPhotos;
     if (!photos.length) return;
 
-    var current = 0;
-    var autoplayTimer;
+    let current= 0;
+    let autoplayTimer;
 
     // Build slides
     photos.forEach(function (photo, i) {
-      var img = document.createElement('img');
+      const img = document.createElement('img');
       img.src = photo.url;
       img.alt = photo.alt;
       img.loading = i === 0 ? 'eager' : 'lazy';
       track.appendChild(img);
 
       if (dotsContainer) {
-        var dot = document.createElement('button');
+        const dot = document.createElement('button');
         dot.addEventListener('click', function () { goTo(i); });
         dotsContainer.appendChild(dot);
       }
     });
 
-    var dots = dotsContainer ? dotsContainer.querySelectorAll('button') : [];
+    const dots = dotsContainer ? dotsContainer.querySelectorAll('button') : [];
 
     function updateDots() {
       dots.forEach(function (d, i) { d.classList.toggle('active', i === current); });
@@ -112,36 +112,36 @@
     resetAutoplay();
 
     // Swipe support
-    var touchStartX = 0;
+    let touchStartX= 0;
     track.addEventListener('touchstart', function (e) { touchStartX = e.touches[0].clientX; });
     track.addEventListener('touchend', function (e) {
-      var diff = touchStartX - e.changedTouches[0].clientX;
+      const diff = touchStartX - e.changedTouches[0].clientX;
       if (Math.abs(diff) > 50) { diff > 0 ? goNext() : goPrev(); }
     });
   }
 
   // ---- Countdown ----
   function initCountdown() {
-    var container = document.getElementById('countdown-grid');
+    const container = document.getElementById('countdown-grid');
     if (!container) return;
 
-    var target = new Date(CLASS_CONFIG.countdownTarget).getTime();
+    const target = new Date(CLASS_CONFIG.countdownTarget).getTime();
 
     function update() {
-      var now = Date.now();
-      var diff = target - now;
+      const now = Date.now();
+      const diff = target - now;
 
       if (diff <= 0) {
         container.innerHTML = '<div class="countdown-item"><div class="countdown-num">🎉</div><div class="countdown-label">中考加油！</div></div>';
         return;
       }
 
-      var days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      var seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-      var items = [
+      const items = [
         { num: days, label: '天' },
         { num: hours, label: '时' },
         { num: minutes, label: '分' },
@@ -159,7 +159,7 @@
 
   // ---- Notices ----
   function initNotices() {
-    var list = document.getElementById('notice-list');
+    const list = document.getElementById('notice-list');
     if (!list) return;
 
     list.innerHTML = CLASS_CONFIG.notices.map(function (n) {
@@ -175,7 +175,7 @@
 
   // ---- Student Wall ----
   function initStudentWall() {
-    var wall = document.getElementById('student-wall');
+    const wall = document.getElementById('student-wall');
     if (!wall) return;
 
     wall.innerHTML = CLASS_CONFIG.students.map(function (name) {
@@ -185,14 +185,14 @@
 
   // ---- Album with Lightbox ----
   function initAlbum() {
-    var grid = document.getElementById('album-grid');
+    const grid = document.getElementById('album-grid');
     if (!grid) return;
 
-    var photos = CLASS_CONFIG.album;
-    var currentIndex = 0;
+    const photos = CLASS_CONFIG.album;
+    let currentIndex= 0;
 
     photos.forEach(function (photo, i) {
-      var item = document.createElement('div');
+      const item = document.createElement('div');
       item.className = 'album-item';
       item.innerHTML = '<img src="' + photo.thumb + '" alt="' + photo.caption + '" loading="lazy"><div class="album-caption">' + photo.caption + '</div>';
       item.addEventListener('click', function () { openLightbox(i); });
@@ -206,17 +206,17 @@
     }
 
     function closeLightbox() {
-      var lb = document.querySelector('.lightbox');
+      const lb = document.querySelector('.lightbox');
       if (lb) lb.remove();
       document.body.style.overflow = '';
     }
 
     function renderLightbox() {
-      var existing = document.querySelector('.lightbox');
+      const existing = document.querySelector('.lightbox');
       if (existing) existing.remove();
 
-      var photo = photos[currentIndex];
-      var lb = document.createElement('div');
+      const photo = photos[currentIndex];
+      const lb = document.createElement('div');
       lb.className = 'lightbox';
       lb.innerHTML =
         '<button class="lightbox-close">&times;</button>' +
@@ -250,11 +250,11 @@
 
   // ---- Timeline ----
   function initTimeline() {
-    var container = document.getElementById('timeline');
+    const container = document.getElementById('timeline');
     if (!container) return;
 
     container.innerHTML = CLASS_CONFIG.timeline.map(function (item) {
-      var imgHtml = item.img ? '<img src="' + item.img + '" alt="' + item.title + '" loading="lazy">' : '';
+      const imgHtml = item.img ? '<img src="' + item.img + '" alt="' + item.title + '" loading="lazy">' : '';
       return '<div class="timeline-item">' +
         '<div class="timeline-card">' +
           imgHtml +
@@ -270,7 +270,7 @@
 
   // ---- Secret Entry Modal ----
   function initSecretEntry() {
-    var btn = document.getElementById('secret-entry-btn');
+    const btn = document.getElementById('secret-entry-btn');
     if (!btn) return;
 
     btn.setAttribute('data-tip', CLASS_CONFIG.secretHint);
@@ -280,10 +280,10 @@
   }
 
   window.showPasswordModal = function () {
-    var existing = document.querySelector('.modal-overlay');
+    const existing = document.querySelector('.modal-overlay');
     if (existing) existing.remove();
 
-    var overlay = document.createElement('div');
+    const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML =
       '<div class="modal">' +
@@ -299,9 +299,9 @@
 
     document.body.appendChild(overlay);
 
-    var input = document.getElementById('secret-password-input');
-    var error = document.getElementById('modal-error');
-    var submit = document.getElementById('modal-submit');
+    const input = document.getElementById('secret-password-input');
+    const error = document.getElementById('modal-error');
+    const submit = document.getElementById('modal-submit');
 
     function check() {
       if (input.value === CLASS_CONFIG.secretPassword) {
@@ -321,7 +321,7 @@
 
   // ---- Back to Top ----
   function initBackToTop() {
-    var btn = document.getElementById('back-top');
+    const btn = document.getElementById('back-top');
     if (!btn) return;
 
     window.addEventListener('scroll', function () {
@@ -337,7 +337,7 @@
   function initSmoothScroll() {
     document.querySelectorAll('a[href^="#"]').forEach(function (a) {
       a.addEventListener('click', function (e) {
-        var target = document.querySelector(this.getAttribute('href'));
+        const target = document.querySelector(this.getAttribute('href'));
         if (target) {
           e.preventDefault();
           target.scrollIntoView({ behavior: 'smooth', block: 'start' });

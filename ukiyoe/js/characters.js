@@ -3,15 +3,15 @@
 // ============================================================
 
 (function() {
-  var cfg = UKIYOE_CONFIG;
+  const cfg = UKIYOE_CONFIG;
 
   // ========== 当前浏览的学生 ==========
-  var currentStudent = null;
+  let currentStudent = null;
 
   // ========== Tab 切换 ==========
   function setupTabs() {
     document.getElementById("main-tabs").addEventListener("click", function(e) {
-      var btn = e.target.closest(".tab-btn");
+      const btn = e.target.closest(".tab-btn");
       if (!btn) return;
 
       // Activate tab button
@@ -19,9 +19,9 @@
       btn.classList.add("active");
 
       // Show panel
-      var tabId = "tab-" + btn.dataset.tab;
+      const tabId = "tab-" + btn.dataset.tab;
       document.querySelectorAll(".tab-panel").forEach(function(p) { p.classList.remove("active"); });
-      var panel = document.getElementById(tabId);
+      const panel = document.getElementById(tabId);
       if (panel) panel.classList.add("active");
 
       // Trigger lazy load
@@ -32,24 +32,24 @@
 
   // ========== 学生列表 ==========
   function renderStudentGrid() {
-    var grid = document.getElementById("student-grid");
+    const grid = document.getElementById("student-grid");
     if (!grid) return;
     grid.innerHTML = cfg.students.map(function(name, idx) {
-      var initials = name.charAt(name.length - 1);
-      return '<a href="javascript:void(0)" class="student-card" data-student="' + U.hesc(name) + '">' +
+      const initials = name.charAt(name.length - 1);
+      return '<div class="student-card" data-student="' + U.hesc(name) + '" role="button" tabindex="0">' +
         '<div class="student-avatar">' + U.hesc(initials) + '</div>' +
         '<div class="student-name">' + U.hesc(name) + '</div>' +
-      '</a>';
+      '</div>';
     }).join("");
 
     grid.addEventListener("click", function(e) {
-      var card = e.target.closest(".student-card");
+      const card = e.target.closest(".student-card");
       if (!card) return;
       showStudentDetail(card.dataset.student);
     });
 
     // Check hash for direct student link
-    var hashStudent = getParam("student");
+    const hashStudent = getParam("student");
     if (hashStudent) showStudentDetail(hashStudent);
   }
 
@@ -77,12 +77,12 @@
   }
 
   document.addEventListener("DOMContentLoaded", function() {
-    var backBtn = document.getElementById("back-to-list");
+    const backBtn = document.getElementById("back-to-list");
     if (backBtn) backBtn.addEventListener("click", showStudentList);
 
     // Handle browser back
     window.addEventListener("popstate", function() {
-      var s = getParam("student");
+      const s = getParam("student");
       if (s) showStudentDetail(s);
       else showStudentList();
     });
@@ -90,11 +90,11 @@
 
   // ========== 印象碎片 ==========
   async function loadImpressions(studentName) {
-    var list = document.getElementById("impression-list");
-    var countEl = document.getElementById("detail-count");
+    const list = document.getElementById("impression-list");
+    const countEl = document.getElementById("detail-count");
     if (!list) return;
 
-    var impressions = await DB.query("Impressions", function(imp) {
+    const impressions = await DB.query("Impressions", function(imp) {
       return imp.targetStudent === studentName;
     });
     // Shuffle for warmth
@@ -106,7 +106,7 @@
       list.innerHTML = '<div class="empty-state"><span class="empty-icon">💬</span><p>还没有关于TA的印象碎片<br>成为第一个写下的人吧</p></div>';
     } else {
       list.innerHTML = impressions.map(function(imp) {
-        var authorName = imp.author || "匿名同学";
+        const authorName = imp.author || "匿名同学";
         return '<div class="impression-bubble">' +
           '<div class="impression-content">' + U.hesc(imp.content) + '</div>' +
           '<div class="impression-meta">' +
@@ -122,8 +122,8 @@
       // Like buttons
       list.querySelectorAll(".like-btn").forEach(function(btn) {
         btn.addEventListener("click", async function() {
-          var id = this.dataset.id;
-          var likes = parseInt(this.dataset.likes) + 1;
+          const id = this.dataset.id;
+          const likes = parseInt(this.dataset.likes) + 1;
           this.dataset.likes = likes;
           this.textContent = "❤ " + likes;
           this.classList.add("liked");
@@ -136,26 +136,26 @@
 
   // Submit impression
   document.addEventListener("DOMContentLoaded", function() {
-    var submitBtn = document.getElementById("impression-submit");
+    const submitBtn = document.getElementById("impression-submit");
     if (!submitBtn) return;
 
     submitBtn.addEventListener("click", async function() {
-      var input = document.getElementById("impression-input");
-      var authorInput = document.getElementById("impression-author");
-      var content = input.value.trim();
+      const input = document.getElementById("impression-input");
+      const authorInput = document.getElementById("impression-author");
+      const content = input.value.trim();
 
       if (!currentStudent) { showToast("请先选择一个同学"); return; }
       if (content.length < 10) { showToast("至少写10个字吧，多说点细节～"); return; }
       if (content.length > 100) { showToast("太长了，控制在100字以内吧"); return; }
 
-      var badPatterns = ["乐于助人", "学习认真", "团结同学", "尊敬师长"];
-      var hasBad = badPatterns.some(function(p) { return content.includes(p); });
+      const badPatterns = ["乐于助人", "学习认真", "团结同学", "尊敬师长"];
+      const hasBad = badPatterns.some(function(p) { return content.includes(p); });
       if (hasBad && content.length < 30) {
         showToast("写得再具体一点吧～想想那件让你记住TA的小事");
         return;
       }
 
-      var author = authorInput.value.trim() || "匿名同学";
+      const author = authorInput.value.trim() || "匿名同学";
       // Save nickname for mood
       if (author !== "匿名同学") localStorage.setItem("ukiyoe_nickname", author);
 
@@ -174,38 +174,49 @@
   });
 
   // ========== 趣味之最 ==========
-  var awardsRendered = false;
+  let awardsRendered = false;
   async function renderAwards() {
     if (awardsRendered) return;
     awardsRendered = true;
 
-    var grid = document.getElementById("award-grid");
+    const grid = document.getElementById("award-grid");
     if (!grid) return;
 
+    // Load custom awards from DB and merge with presets
+    const customAwards = await DB.query("CustomAwards");
+    const allAwards = cfg.funAwards.concat(customAwards.map(function(a) {
+      return { id: a.objectId, title: a.title, icon: a.icon || "✨" };
+    }));
+
     // Fetch nominations from DB
-    var nominations = await DB.query("FunAwards");
+    const nominations = await DB.query("FunAwards");
 
-    grid.innerHTML = cfg.funAwards.map(function(award) {
+    grid.innerHTML = allAwards.map(function(award) {
       // Find nominations for this award
-      var noms = nominations.filter(function(n) { return n.title === award.title; });
+      const noms = nominations.filter(function(n) { return n.title === award.title; });
 
-      var evidenceHtml = "";
+      let evidenceHtml = "";
       if (noms.length > 0) {
         // Count votes per nominee
-        var tally = {};
+        const tally = {};
         noms.forEach(function(n) { tally[n.nominee] = (tally[n.nominee] || 0) + 1; });
-        var sorted = Object.entries(tally).sort(function(a, b) { return b[1] - a[1]; });
-        var winner = sorted[0][0];
-        var bestEvidence = noms.find(function(n) { return n.nominee === winner && n.evidence; });
+        const sorted = Object.entries(tally).sort(function(a, b) { return b[1] - a[1]; });
+        const winner = sorted[0][0];
+        const bestEvidence = noms.find(function(n) { return n.nominee === winner && n.evidence; });
         evidenceHtml = '<div class="award-winner">' + U.hesc(winner) + '</div>' +
           (bestEvidence ? '<div class="award-evidence">"' + U.hesc(bestEvidence.evidence) + '"</div>' : '');
       } else {
         evidenceHtml = '<div style="color:var(--text-muted);font-size:0.85rem;margin-top:0.5rem">还没有提名，快来第一个吧</div>';
       }
 
+      var descHtml = award.desc
+        ? '<div class="award-evidence" style="font-style:normal;color:var(--text-light);margin-top:0.3rem">' + U.hesc(award.desc) + '</div>'
+        : '';
+
       return '<div class="award-card">' +
         '<div style="font-size:2rem;margin-bottom:0.5rem">' + award.icon + '</div>' +
         '<div class="award-title">' + U.hesc(award.title) + '</div>' +
+        descHtml +
         evidenceHtml +
         '<button class="btn btn-ghost btn-sm" style="margin-top:0.5rem" data-award="' + U.hesc(award.title) + '" data-action="nominate">提名TA →</button>' +
       '</div>';
@@ -217,11 +228,11 @@
 
   // ========== 提名弹窗 ==========
   function setupNomination(nominations) {
-    var modal = document.getElementById("nominate-modal");
-    var titleText = document.getElementById("nominate-title-text");
-    var studentSelect = document.getElementById("nominate-student");
-    var evidenceInput = document.getElementById("nominate-evidence");
-    var currentAwardTitle = "";
+    const modal = document.getElementById("nominate-modal");
+    const titleText = document.getElementById("nominate-title-text");
+    const studentSelect = document.getElementById("nominate-student");
+    const evidenceInput = document.getElementById("nominate-evidence");
+    let currentAwardTitle = "";
 
     // Fill student options
     studentSelect.innerHTML = '<option value="">选择同学……</option>' +
@@ -229,7 +240,7 @@
 
     // Open modal
     document.getElementById("award-grid").addEventListener("click", function(e) {
-      var btn = e.target.closest("[data-action='nominate']");
+      const btn = e.target.closest("[data-action='nominate']");
       if (!btn) return;
       currentAwardTitle = btn.dataset.award;
       titleText.textContent = currentAwardTitle;
@@ -246,8 +257,8 @@
 
     // Submit
     document.getElementById("nominate-submit").addEventListener("click", async function() {
-      var student = studentSelect.value;
-      var evidence = evidenceInput.value.trim();
+      const student = studentSelect.value;
+      const evidence = evidenceInput.value.trim();
       if (!student) { showToast("请选择一位同学"); return; }
       if (!evidence) { showToast("写上证据会更有说服力哦～"); return; }
 
@@ -272,15 +283,19 @@
 
   // Custom award
   document.addEventListener("DOMContentLoaded", function() {
-    var newAwardBtn = document.getElementById("new-award-submit");
+    const newAwardBtn = document.getElementById("new-award-submit");
     if (!newAwardBtn) return;
     newAwardBtn.addEventListener("click", async function() {
-      var input = document.getElementById("new-award-title");
-      var title = input.value.trim();
+      const input = document.getElementById("new-award-title");
+      const title = input.value.trim();
       if (!title) { showToast("请输入称号名称"); return; }
 
-      // Add to local config
-      cfg.funAwards.push({ id: "custom_" + Date.now(), title: title, icon: "✨" });
+      // Save to DB so it persists across refreshes
+      await DB.save("CustomAwards", {
+        title: title,
+        icon: "✨",
+        createdAt: new Date().toISOString()
+      });
       input.value = "";
       showToast("新称号已添加！");
 
@@ -292,10 +307,10 @@
 
   // ========== 同桌编年史 ==========
   async function loadDeskTimelineForStudent(studentName) {
-    var tl = document.getElementById("detail-desk-timeline");
+    const tl = document.getElementById("detail-desk-timeline");
     if (!tl) return;
 
-    var records = await DB.query("DeskTimeline", function(r) { return r.student === studentName; });
+    const records = await DB.query("DeskTimeline", function(r) { return r.student === studentName; });
     records.sort(function(a, b) { return new Date(a.createdAt) - new Date(b.createdAt); });
 
     if (records.length === 0) {
@@ -312,15 +327,15 @@
     }).join("");
   }
 
-  var desksRendered = false;
+  let desksRendered = false;
   async function renderAllDeskTimeline() {
     if (desksRendered) return;
     desksRendered = true;
 
-    var tl = document.getElementById("all-desk-timeline");
+    const tl = document.getElementById("all-desk-timeline");
     if (!tl) return;
 
-    var records = await DB.query("DeskTimeline");
+    const records = await DB.query("DeskTimeline");
     records.sort(function(a, b) { return new Date(a.createdAt) - new Date(b.createdAt); });
 
     if (records.length === 0) {
@@ -339,19 +354,19 @@
 
   // Submit desk record
   document.addEventListener("DOMContentLoaded", function() {
-    var deskSubmit = document.getElementById("desk-submit");
+    const deskSubmit = document.getElementById("desk-submit");
     if (!deskSubmit) return;
 
     deskSubmit.addEventListener("click", async function() {
-      var selfEl = document.getElementById("desk-self");
-      var mateEl = document.getElementById("desk-mate");
-      var periodEl = document.getElementById("desk-period");
-      var memoryEl = document.getElementById("desk-memory");
+      const selfEl = document.getElementById("desk-self");
+      const mateEl = document.getElementById("desk-mate");
+      const periodEl = document.getElementById("desk-period");
+      const memoryEl = document.getElementById("desk-memory");
 
-      var student = selfEl.value.trim();
-      var deskmate = mateEl.value.trim();
-      var period = periodEl.value.trim();
-      var memory = memoryEl.value.trim();
+      const student = selfEl.value.trim();
+      const deskmate = mateEl.value.trim();
+      const period = periodEl.value.trim();
+      const memory = memoryEl.value.trim();
 
       if (!student || !deskmate) { showToast("请填写你的名字和同桌的名字"); return; }
 
@@ -374,6 +389,39 @@
   document.addEventListener("DOMContentLoaded", function() {
     setupTabs();
     renderStudentGrid();
+
+    // Student search filter
+    const searchInput = document.getElementById("student-search");
+    if (searchInput) {
+      searchInput.addEventListener("input", function() {
+        const q = this.value.trim().toLowerCase();
+        const cards = document.querySelectorAll("#student-grid .student-card");
+        let visible = 0;
+        cards.forEach(function(card) {
+          const name = (card.dataset.student || "").toLowerCase();
+          if (!q || name.includes(q)) {
+            card.style.display = "";
+            visible++;
+          } else {
+            card.style.display = "none";
+          }
+        });
+        // Show empty hint
+        let hint = document.getElementById("search-hint");
+        if (visible === 0 && q) {
+          if (!hint) {
+            hint = document.createElement("p");
+            hint.id = "search-hint";
+            hint.style.cssText = "text-align:center;color:var(--text-muted);padding:2rem;font-size:0.95rem";
+            hint.textContent = "没找到匹配的同学～";
+            document.getElementById("student-grid").after(hint);
+          }
+          hint.style.display = "";
+        } else if (hint) {
+          hint.style.display = "none";
+        }
+      });
+    }
   });
 
 })();

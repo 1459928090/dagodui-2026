@@ -15,14 +15,14 @@
   function ready(fn) { if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
 
   ready(function () {
-    var decryptBtn = document.getElementById('decrypt-btn');
-    var cipherInput = document.getElementById('cipher-input');
-    var resultArea = document.getElementById('result-area');
+    const decryptBtn = document.getElementById('decrypt-btn');
+    const cipherInput = document.getElementById('cipher-input');
+    const resultArea = document.getElementById('result-area');
 
     if (!decryptBtn || !cipherInput) return;
 
     function doDecrypt() {
-      var cipherText = cipherInput.value.trim();
+      const cipherText = cipherInput.value.trim();
       resultArea.innerHTML = '';
 
       if (!cipherText) {
@@ -31,8 +31,8 @@
       }
 
       try {
-        var bytes = CryptoJS.AES.decrypt(cipherText, CLASS_CONFIG.encryptKey);
-        var plainText = bytes.toString(CryptoJS.enc.Utf8);
+        const bytes = CryptoJS.AES.decrypt(cipherText, CLASS_CONFIG.encryptKey);
+        const plainText = bytes.toString(CryptoJS.enc.Utf8);
 
         if (!plainText) {
           resultArea.innerHTML = '<div class="letter-error">咦？这好像不是你的信，再检查一下哦～<br>密文可能已损坏，或者密钥不匹配。</div>';
@@ -40,7 +40,7 @@
         }
 
         // 解析 JSON 格式 { name: "学生名", message: "信件内容" }
-        var letter;
+        let letter;
         try {
           letter = JSON.parse(plainText);
         } catch (e) {
@@ -48,9 +48,9 @@
           letter = { name: '亲爱的同学', message: plainText };
         }
 
-        var greeting = letter.name ? '亲爱的 ' + letter.name + '：' : '亲爱的同学：';
-        var body = letter.message || plainText;
-        var closing = '\n\n—— 永远爱你们的刘老师\n大对勾托管中心2026级';
+        const greeting = letter.name ? '亲爱的 ' + letter.name + '：' : '亲爱的同学：';
+        const body = letter.message || plainText;
+        const closing = '\n\n—— 永远爱你们的刘老师\n大对勾托管中心2026级';
 
         resultArea.innerHTML =
           '<div class="letter-result">' +

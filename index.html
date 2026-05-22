@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>大对勾托管中心2026级 — 我们的班级回忆</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4/dist/av-min.js"></script>
 </head>
 <body>
 
@@ -21,6 +22,7 @@
         <li><a href="#videos">视频</a></li>
         <li><a href="#timeline">回忆</a></li>
         <li><a href="#files">文件</a></li>
+        <li><a href="ukiyoe/index.html">🎨 浮世绘</a></li>
       </ul>
     </div>
   </nav>
@@ -126,6 +128,18 @@
     </div>
   </section>
 
+  <!-- ============ 1.1 新增：老师的话（语音寄语） ============ -->
+  <section class="voice-section" id="voice-section">
+    <div class="section-inner">
+      <h2 class="section-title">老师的话</h2>
+      <p class="section-subtitle">听一听老师们对你们的寄语和祝福</p>
+      <div class="voice-grid" id="voice-grid"></div>
+      <div style="text-align:center;margin-top:1.5rem">
+        <button class="voice-play-all-btn" id="voice-play-all">▶ 全部播放</button>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ 页脚 ============ -->
   <footer class="footer">
     <p>大对勾托管中心 · 2026级 · 永远的班级</p>
@@ -142,31 +156,55 @@
 
   <!-- ============ JS ============ -->
   <script src="js/config.js"></script>
+  <script src="js/lc-init.js"></script>
+  <script src="js/music-player.js"></script>
+  <script src="js/danmu.js"></script>
+  <script src="js/voice-messages.js"></script>
   <script src="js/main.js"></script>
   <script>
     // 初始化页面文字（从配置动态填入）
     (function() {
-      var cfg = CLASS_CONFIG;
+      const cfg = CLASS_CONFIG;
 
       // 班主任寄语
-      var msgEl = document.getElementById('message-text');
-      var sigEl = document.getElementById('message-signature');
+      const msgEl = document.getElementById('message-text');
+      const sigEl = document.getElementById('message-signature');
       if (msgEl) msgEl.textContent = cfg.teacherMessage;
       if (sigEl) sigEl.textContent = '—— ' + cfg.teacherName;
 
       // 视频列表
-      var videoGrid = document.getElementById('video-grid');
+      const videoGrid = document.getElementById('video-grid');
       if (videoGrid) {
-        videoGrid.innerHTML = cfg.videos.map(function(v) {
+        videoGrid.innerHTML = cfg.videos.map(function(v, i) {
+          var mediaHtml;
+          if (v.type === 'embed') {
+            mediaHtml =
+              '<div class="video-embed" data-embed="' + i + '">' +
+                '<img class="video-embed-poster" src="' + (v.poster || '') + '" alt="' + v.title + '" />' +
+                '<button class="video-embed-play" aria-label="播放">▶</button>' +
+              '</div>';
+          } else {
+            mediaHtml = '<video src="' + v.url + '" poster="' + (v.poster || '') + '" controls preload="none"></video>';
+          }
           return '<div class="video-card">' +
-            '<video src="' + v.url + '" poster="' + v.poster + '" controls preload="none"></video>' +
+            mediaHtml +
             '<div class="video-title">' + v.title + '</div>' +
           '</div>';
         }).join('');
+
+        // 点击封面加载 iframe
+        videoGrid.querySelectorAll('.video-embed').forEach(function(el) {
+          el.addEventListener('click', function() {
+            var i = el.getAttribute('data-embed');
+            var v = cfg.videos[i];
+            el.innerHTML = v.embed;
+            el.classList.add('loaded');
+          });
+        });
       }
 
       // 文件列表
-      var fileList = document.getElementById('file-list');
+      const fileList = document.getElementById('file-list');
       if (fileList) {
         fileList.innerHTML = cfg.files.map(function(f) {
           return '<div class="file-item">' +

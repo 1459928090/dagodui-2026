@@ -3,31 +3,30 @@
 // ============================================================
 
 (function() {
-  var cfg = UKIYOE_CONFIG;
+  const cfg = UKIYOE_CONFIG;
 
   // ========== Tab 切换 ==========
   function setupTabs() {
     document.getElementById("main-tabs").addEventListener("click", function(e) {
-      var btn = e.target.closest(".tab-btn");
+      const btn = e.target.closest(".tab-btn");
       if (!btn) return;
       this.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
       btn.classList.add("active");
-      var tabId = "tab-" + btn.dataset.tab;
+      const tabId = "tab-" + btn.dataset.tab;
       document.querySelectorAll(".tab-panel").forEach(function(p) { p.classList.remove("active"); });
-      var panel = document.getElementById(tabId);
+      const panel = document.getElementById(tabId);
       if (panel) panel.classList.add("active");
       if (btn.dataset.tab === "slang") renderSlangs();
     });
   }
 
   // ========== 班级博物馆 ==========
-  async function renderArtifacts() {
-    var grid = document.getElementById("artifact-grid");
-    if (!grid) return;
+  let allArtifacts = [];
+  let artifactListenerSetup = false;
 
-    var dbArtifacts = await DB.query("Artifacts");
-
-    var all = cfg.artifacts.concat(dbArtifacts.map(function(a) {
+  async function loadArtifactData() {
+    const dbArtifacts = await DB.query("Artifacts");
+    allArtifacts = cfg.artifacts.concat(dbArtifacts.map(function(a) {
       return {
         id: a.objectId,
         name: a.name,
@@ -37,8 +36,13 @@
         fromDB: true
       };
     }));
+  }
 
-    grid.innerHTML = all.map(function(a, idx) {
+  function renderArtifactGrid() {
+    const grid = document.getElementById("artifact-grid");
+    if (!grid) return;
+
+    grid.innerHTML = allArtifacts.map(function(a, idx) {
       return '<div class="card artifact-card" data-idx="' + idx + '">' +
         (a.image ? '<img class="artifact-img" src="' + U.hesc(a.image) + '" alt="' + U.hesc(a.name) + '" loading="lazy" onerror="this.style.background=\'var(--gold-light)\'">' :
          '<div class="artifact-img" style="display:flex;align-items:center;justify-content:center;font-size:2.5rem">🏺</div>') +
@@ -49,23 +53,31 @@
       '</div>';
     }).join("");
 
-    // Click to open detail
-    grid.addEventListener("click", function(e) {
-      var card = e.target.closest(".artifact-card");
-      if (!card) return;
-      var idx = parseInt(card.dataset.idx);
-      var artifact = all[idx];
-      if (!artifact) return;
-      openArtifactModal(artifact);
-    });
+    // Click handler — only bind once
+    if (!artifactListenerSetup) {
+      artifactListenerSetup = true;
+      grid.addEventListener("click", function(e) {
+        const card = e.target.closest(".artifact-card");
+        if (!card) return;
+        const idx = parseInt(card.dataset.idx);
+        const artifact = allArtifacts[idx];
+        if (!artifact) return;
+        openArtifactModal(artifact);
+      });
+    }
+  }
+
+  async function refreshArtifacts() {
+    await loadArtifactData();
+    renderArtifactGrid();
   }
 
   function openArtifactModal(a) {
-    var modal = document.getElementById("artifact-modal");
+    const modal = document.getElementById("artifact-modal");
     document.getElementById("artifact-modal-name").textContent = a.name;
     document.getElementById("artifact-modal-category").textContent = "📂 " + (a.category || "物品");
     document.getElementById("artifact-modal-desc").textContent = a.description;
-    var img = document.getElementById("artifact-modal-img");
+    const img = document.getElementById("artifact-modal-img");
     if (a.image) { img.src = a.image; img.style.display = "block"; }
     else { img.style.display = "none"; }
     modal.style.display = "flex";
@@ -73,20 +85,20 @@
 
   // Close modal
   document.addEventListener("DOMContentLoaded", function() {
-    var modal = document.getElementById("artifact-modal");
+    const modal = document.getElementById("artifact-modal");
     if (!modal) return;
     document.getElementById("artifact-modal-close").addEventListener("click", function() { modal.style.display = "none"; });
     modal.addEventListener("click", function(e) { if (e.target === modal) modal.style.display = "none"; });
 
     // Submit artifact
-    var artSubmit = document.getElementById("new-artifact-submit");
+    const artSubmit = document.getElementById("new-artifact-submit");
     if (artSubmit) {
       artSubmit.addEventListener("click", async function() {
-        var name = document.getElementById("new-artifact-name").value.trim();
-        var category = document.getElementById("new-artifact-category").value.trim();
-        var desc = document.getElementById("new-artifact-desc").value.trim();
-        var image = document.getElementById("new-artifact-image").value.trim();
-        var contributor = document.getElementById("new-artifact-contributor").value.trim() || "匿名同学";
+        const name = document.getElementById("new-artifact-name").value.trim();
+        const category = document.getElementById("new-artifact-category").value.trim();
+        const desc = document.getElementById("new-artifact-desc").value.trim();
+        const image = document.getElementById("new-artifact-image").value.trim();
+        const contributor = document.getElementById("new-artifact-contributor").value.trim() || "匿名同学";
 
         if (!name || !desc) { showToast("至少填上名字和解说吧～"); return; }
 
@@ -106,18 +118,18 @@
         document.getElementById("new-artifact-contributor").value = "";
         showToast("文物已入馆收藏 🏛");
 
-        await renderArtifacts();
+        await refreshArtifacts();
       });
     }
 
     // Submit slang
-    var slangSubmit = document.getElementById("new-slang-submit");
+    const slangSubmit = document.getElementById("new-slang-submit");
     if (slangSubmit) {
       slangSubmit.addEventListener("click", async function() {
-        var term = document.getElementById("new-slang-term").value.trim();
-        var def = document.getElementById("new-slang-def").value.trim();
-        var example = document.getElementById("new-slang-example").value.trim();
-        var contributor = document.getElementById("new-slang-contributor").value.trim() || "匿名同学";
+        const term = document.getElementById("new-slang-term").value.trim();
+        const def = document.getElementById("new-slang-def").value.trim();
+        const example = document.getElementById("new-slang-example").value.trim();
+        const contributor = document.getElementById("new-slang-contributor").value.trim() || "匿名同学";
 
         if (!term || !def) { showToast("至少填上词条名和释义吧～"); return; }
 
@@ -143,18 +155,18 @@
   });
 
   // ========== 暗号与梗百科 ==========
-  var slangsRendered = false;
+  let slangsRendered = false;
   async function renderSlangs() {
     if (slangsRendered) return;
     slangsRendered = true;
 
-    var grid = document.getElementById("slang-grid");
+    const grid = document.getElementById("slang-grid");
     if (!grid) return;
 
-    var dbSlangs = await DB.query("ClassSlang");
+    const dbSlangs = await DB.query("ClassSlang");
     dbSlangs.sort(function(a, b) { return (b.likes || 0) - (a.likes || 0); });
 
-    var all = cfg.slangs.concat(dbSlangs);
+    const all = cfg.slangs.concat(dbSlangs);
 
     grid.innerHTML = all.map(function(s, idx) {
       return '<div class="card slang-card">' +
@@ -171,15 +183,15 @@
     // Like buttons
     grid.querySelectorAll(".like-btn").forEach(function(btn) {
       btn.addEventListener("click", async function() {
-        var idx = parseInt(this.dataset.idx);
-        var likes = parseInt(this.dataset.likes) + 1;
+        const idx = parseInt(this.dataset.idx);
+        const likes = parseInt(this.dataset.likes) + 1;
         this.dataset.likes = likes;
         this.textContent = "❤ " + likes;
         this.classList.add("liked");
         // Only DB slangs have objectId for update
         if (idx >= cfg.slangs.length) {
-          var dbIdx = idx - cfg.slangs.length;
-          var obj = (await DB.query("ClassSlang"))[dbIdx];
+          const dbIdx = idx - cfg.slangs.length;
+          const obj = (await DB.query("ClassSlang"))[dbIdx];
           if (obj) await DB.update("ClassSlang", obj.objectId, { likes: likes });
         }
       });
@@ -189,7 +201,7 @@
   // ========== Init ==========
   document.addEventListener("DOMContentLoaded", function() {
     setupTabs();
-    renderArtifacts();
+    refreshArtifacts();
   });
 
 })();

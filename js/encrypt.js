@@ -8,21 +8,21 @@
   function ready(fn) { if (document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
 
   ready(function () {
-    var keyDisplay = document.getElementById('key-display');
-    var toggleKeyBtn = document.getElementById('toggle-key');
-    var encryptSingleBtn = document.getElementById('encrypt-single');
-    var copySingleBtn = document.getElementById('copy-single');
-    var singleOutput = document.getElementById('single-output');
-    var encryptBatchBtn = document.getElementById('encrypt-batch');
-    var copyAllBtn = document.getElementById('copy-all');
-    var downloadAllBtn = document.getElementById('download-all');
-    var batchOutput = document.getElementById('batch-output');
+    const keyDisplay = document.getElementById('key-display');
+    const toggleKeyBtn = document.getElementById('toggle-key');
+    const encryptSingleBtn = document.getElementById('encrypt-single');
+    const copySingleBtn = document.getElementById('copy-single');
+    const singleOutput = document.getElementById('single-output');
+    const encryptBatchBtn = document.getElementById('encrypt-batch');
+    const copyAllBtn = document.getElementById('copy-all');
+    const downloadAllBtn = document.getElementById('download-all');
+    const batchOutput = document.getElementById('batch-output');
 
-    var lastSingleCipher = '';
-    var lastBatchResults = [];
+    let lastSingleCipher= '';
+    let lastBatchResults= [];
 
     // ---- 密钥显示 ----
-    var keyHidden = true;
+    let keyHidden= true;
     if (keyDisplay) {
       keyDisplay.value = CLASS_CONFIG.encryptKey.replace(/./g, '*');
     }
@@ -41,15 +41,15 @@
 
     // ---- 核心加密函数 ----
     function encrypt(studentName, message) {
-      var payload = JSON.stringify({ name: studentName, message: message });
+      const payload = JSON.stringify({ name: studentName, message: message });
       return CryptoJS.AES.encrypt(payload, CLASS_CONFIG.encryptKey).toString();
     }
 
     // ---- 单个加密 ----
     if (encryptSingleBtn) {
       encryptSingleBtn.addEventListener('click', function () {
-        var name = document.getElementById('student-name').value.trim();
-        var content = document.getElementById('letter-content').value.trim();
+        const name = document.getElementById('student-name').value.trim();
+        const content = document.getElementById('letter-content').value.trim();
 
         if (!name || !content) {
           alert('请填写学生姓名和信件内容');
@@ -71,7 +71,7 @@
       copySingleBtn.addEventListener('click', function () {
         if (!lastSingleCipher) return;
         copyToClipboard(lastSingleCipher);
-        var orig = copySingleBtn.textContent;
+        const orig = copySingleBtn.textContent;
         copySingleBtn.textContent = '已复制 ✓';
         setTimeout(function () { copySingleBtn.textContent = orig; }, 2000);
       });
@@ -80,8 +80,8 @@
     // ---- 批量加密 ----
     if (encryptBatchBtn) {
       encryptBatchBtn.addEventListener('click', function () {
-        var batchInput = document.getElementById('batch-input');
-        var lines = batchInput.value.trim().split('\n').filter(function (line) {
+        const batchInput = document.getElementById('batch-input');
+        const lines = batchInput.value.trim().split('\n').filter(function (line) {
           return line.trim() !== '';
         });
 
@@ -92,18 +92,18 @@
 
         lastBatchResults = [];
 
-        var html = '';
+        const html = '';
         lines.forEach(function (line, i) {
-          var parts = line.split('|');
+          const parts = line.split('|');
           if (parts.length < 2) {
             html += '<div class="tool-result-item" style="border-left:3px solid var(--primary)">' +
               '<div class="tool-result-name">⚠ 第 ' + (i + 1) + ' 行格式错误（缺少 | 分隔符），已跳过</div></div>';
             return;
           }
 
-          var name = parts[0].trim();
-          var message = parts.slice(1).join('|').trim();
-          var cipher = encrypt(name, message);
+          const name = parts[0].trim();
+          const message = parts.slice(1).join('|').trim();
+          const cipher = encrypt(name, message);
 
           lastBatchResults.push({ name: name, cipher: cipher });
 
@@ -131,7 +131,7 @@
 
     // ---- 构建打印卡片 HTML ----
     function buildPrintCards(results) {
-      var cards = results.map(function (r) {
+      const cards = results.map(function (r) {
         return '<div style="border:1px solid #ccc;padding:12px;margin:8px 0;border-radius:6px;background:#fff">' +
           '<strong>' + r.name + '</strong><br>' +
           '<span style="font-size:0.65rem;word-break:break-all;color:#666">' + r.cipher + '</span>' +
@@ -144,7 +144,7 @@
     // ---- 打印卡片（事件委托） ----
     document.addEventListener('click', function (e) {
       if (e.target && e.target.id === 'print-cards-btn') {
-        var printWin = window.open('', '_blank', 'width=800,height=600');
+        const printWin = window.open('', '_blank', 'width=800,height=600');
         printWin.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>时光信件卡片</title>');
         printWin.document.write('<style>');
         printWin.document.write('*{box-sizing:border-box;margin:0;padding:0}');
@@ -175,12 +175,12 @@
       copyAllBtn.addEventListener('click', function () {
         if (lastBatchResults.length === 0) return;
 
-        var text = lastBatchResults.map(function (r) {
+        const text = lastBatchResults.map(function (r) {
           return '【' + r.name + '】\n' + r.cipher;
         }).join('\n\n---\n\n');
 
         copyToClipboard(text);
-        var orig = copyAllBtn.textContent;
+        const orig = copyAllBtn.textContent;
         copyAllBtn.textContent = '已复制 ' + lastBatchResults.length + ' 条 ✓';
         setTimeout(function () { copyAllBtn.textContent = orig; }, 2000);
       });
@@ -191,13 +191,13 @@
       downloadAllBtn.addEventListener('click', function () {
         if (lastBatchResults.length === 0) return;
 
-        var text = lastBatchResults.map(function (r) {
+        const text = lastBatchResults.map(function (r) {
           return '【' + r.name + '】\n' + r.cipher;
         }).join('\n\n---\n\n');
 
-        var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
         a.href = url;
         a.download = '大对勾2026级_时光信件密文_' + new Date().toISOString().slice(0, 10) + '.txt';
         document.body.appendChild(a);
@@ -219,7 +219,7 @@
     }
 
     function fallbackCopy(text) {
-      var textarea = document.createElement('textarea');
+      const textarea = document.createElement('textarea');
       textarea.value = text;
       textarea.style.position = 'fixed';
       textarea.style.left = '-9999px';
