@@ -42,7 +42,7 @@
       return;
     }
 
-    const html = '';
+    let html = '';
     voiceData.forEach(function(teacher, i) {
       html +=
         '<div class="voice-card" data-index="' + i + '" id="voice-card-' + i + '">' +
