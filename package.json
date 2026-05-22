@@ -1,7 +1,0 @@
-{
-  "name": "dagodui-2026",
-  "private": true,
-  "dependencies": {
-    "@cloudbase/node-sdk": "^2.0.0"
-  }
-}

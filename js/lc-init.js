@@ -1,10 +1,13 @@
 // ============================================================
 // 大对勾2026级 — 数据存储层 (CloudBase 云开发 + localStorage 降级)
-// 通过 Vercel Serverless API 代理访问 CloudBase 数据库
+// 部署于 CloudBase 静态托管，同源无安全域名限制
 // ============================================================
 
 const DB = (function() {
-  // ========== LocalStorage 实现（离线/未配置时降级） ==========
+  const cfg = TCB_CONFIG;
+  const useTCB = cfg.envId && cfg.envId.trim() !== "";
+
+  // ========== LocalStorage 实现 ==========
   const LS = {
     _getTable: function(name) {
       try { return JSON.parse(localStorage.getItem("dagodui_" + name) || "[]"); }
@@ -44,76 +47,88 @@ const DB = (function() {
     }
   };
 
-  // ========== CloudBase API 实现 ==========
-  var _apiFailed = false; // 一旦失败就切到本地，避免反复请求
+  // ========== CloudBase SDK 实现 ==========
+  const TCB = {
+    _ready: false,
+    _db: null,
+    _initPromise: null,
 
-  const API = {
-    _base: "/api/db",
-
-    _request: async function(method, table, body, extra) {
-      var url = this._base + "?table=" + encodeURIComponent(table);
-      if (extra) {
-        Object.keys(extra).forEach(function(k) {
-          url += "&" + k + "=" + encodeURIComponent(extra[k]);
-        });
+    init: function() {
+      if (this._ready) return;
+      if (this._initPromise) return this._initPromise;
+      if (typeof tcb === "undefined") {
+        console.warn("CloudBase SDK 未加载，使用本地存储模式");
+        return;
       }
-      var opts = { method: method, headers: { "Content-Type": "application/json" } };
-      if (body) opts.body = JSON.stringify(body);
 
-      var resp = await fetch(url, opts);
-      if (!resp.ok) throw new Error("API " + resp.status);
-      return resp.json();
+      var self = this;
+      this._initPromise = (async function() {
+        try {
+          var app = tcb.init({ env: cfg.envId });
+          self._db = app.database();
+          var auth = app.auth({ persistence: "local" });
+          var loginState = await auth.getLoginState();
+          if (!loginState) {
+            await auth.signInAnonymously();
+          }
+          self._ready = true;
+          console.log("CloudBase 已连接");
+        } catch(e) {
+          console.error("CloudBase 初始化失败:", e);
+          throw e;
+        }
+      })();
+      return this._initPromise;
     },
 
-    save: function(table, obj) {
-      return this._request("POST", table, obj);
+    save: async function(table, obj) {
+      var copy = {};
+      Object.keys(obj).forEach(function(k) { copy[k] = obj[k]; });
+      copy.createdAt = copy.createdAt || new Date().toISOString();
+      var res = await this._db.collection(table).add(copy);
+      copy.objectId = res.id;
+      copy._id = res.id;
+      return copy;
     },
 
-    query: function(table, filterFn) {
-      return this._request("GET", table, null, null).then(function(result) {
-        var list = (result.data || []).map(function(r) {
-          r.objectId = r._id; return r;
-        });
-        if (filterFn) list = list.filter(filterFn);
-        return list;
-      });
+    query: async function(table, filterFn) {
+      var res = await this._db.collection(table).limit(1000).get();
+      return (res.data || []).map(function(r) {
+        r.objectId = r._id;
+        return r;
+      }).filter(filterFn || function() { return true; });
     },
 
-    update: function(table, objectId, updates) {
-      return this._request("PUT", table, updates, { id: objectId }).then(function() {
-        return updates;
-      });
+    update: async function(table, objectId, updates) {
+      await this._db.collection(table).doc(objectId).update(updates);
+      return updates;
     },
 
-    delete_: function(table, objectId) {
-      return this._request("DELETE", table, null, { id: objectId });
+    delete_: async function(table, objectId) {
+      await this._db.collection(table).doc(objectId).remove();
+      return true;
     },
 
-    count: function(table) {
-      return this._request("GET", table, null, { count: "true" }).then(function(r) {
-        return r.total;
-      });
-    },
-
-    hasTodayRecord: function(table, author) {
-      return this._request("GET", table, null, { author: author, today: "true" }).then(function(r) {
-        return r.count > 0;
-      });
+    count: async function(table) {
+      var res = await this._db.collection(table).count();
+      return res.total;
     }
   };
 
   // ========== 统一接口（自动降级） ==========
+  var _useLS = false;
+
   function auto(fnName) {
     return function() {
-      var args = arguments;
-      // API 已失败过 → 直接用本地
-      if (_apiFailed) {
-        return LS[fnName].apply(LS, args);
+      if (_useLS || !useTCB || typeof tcb === "undefined") {
+        return LS[fnName].apply(LS, arguments);
       }
-      // 尝试 API
-      return API[fnName].apply(API, args).catch(function(e) {
-        console.warn("CloudBase API 不可用，降级到本地存储:", e.message);
-        _apiFailed = true;
+      var args = arguments;
+      return TCB.init().then(function() {
+        return TCB[fnName].apply(TCB, args);
+      }).catch(function(e) {
+        console.warn("CloudBase 操作失败，降级到本地存储:", e.message);
+        _useLS = true;
         return LS[fnName].apply(LS, args);
       });
     };
@@ -121,13 +136,16 @@ const DB = (function() {
 
   return {
     init: function() {
-      // 快速探测 API 是否可用
-      fetch("/api/db?table=_ping&count=true").then(function(r) {
-        if (r.ok) console.log("存储层就绪: CloudBase 云开发");
-        else throw new Error("API not ready");
-      }).catch(function() {
-        _apiFailed = true;
-        console.log("存储层就绪: 本地存储（API 未配置或不可达）");
+      if (!useTCB || typeof tcb === "undefined") {
+        console.log("存储层就绪: 本地存储（未配置 CloudBase）");
+        return;
+      }
+      var self = this;
+      TCB.init().then(function() {
+        console.log("存储层就绪: CloudBase 云开发");
+      }).catch(function(e) {
+        _useLS = true;
+        console.log("存储层就绪: 本地存储（CloudBase 连接失败:", e.message, "）");
       });
     },
 
@@ -137,20 +155,30 @@ const DB = (function() {
     delete_: auto("delete_"),
     count:   auto("count"),
 
-    hasTodayRecord: function(table, author) {
-      if (_apiFailed) {
+    hasTodayRecord: async function(table, author) {
+      if (_useLS || !useTCB || typeof tcb === "undefined") {
         var today = new Date().toISOString().slice(0, 10);
-        return LS.query(table, function(r) {
+        var records = await LS.query(table, function(r) {
           return r.author === author && r.createdAt && r.createdAt.slice(0, 10) === today;
-        }).then(function(records) { return records.length > 0; });
+        });
+        return records.length > 0;
       }
-      return API.hasTodayRecord(table, author).catch(function() {
-        _apiFailed = true;
+      try {
+        await TCB.init();
+        var res = await TCB._db.collection(table).where({ author: author }).limit(1000).get();
         var today = new Date().toISOString().slice(0, 10);
-        return LS.query(table, function(r) {
-          return r.author === author && r.createdAt && r.createdAt.slice(0, 10) === today;
-        }).then(function(records) { return records.length > 0; });
-      });
+        var count = (res.data || []).filter(function(r) {
+          return r.createdAt && r.createdAt.slice(0, 10) === today;
+        }).length;
+        return count > 0;
+      } catch(e) {
+        _useLS = true;
+        var today2 = new Date().toISOString().slice(0, 10);
+        var records2 = await LS.query(table, function(r) {
+          return r.author === author && r.createdAt && r.createdAt.slice(0, 10) === today2;
+        });
+        return records2.length > 0;
+      }
     }
   };
 })();
