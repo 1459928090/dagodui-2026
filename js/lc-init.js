@@ -1,152 +1,156 @@
 // ============================================================
-// 班级浮世绘 — 数据存储层 (Leancloud + localStorage 降级)
+// 大对勾2026级 — 数据存储层 (CloudBase 云开发 + localStorage 降级)
+// 通过 Vercel Serverless API 代理访问 CloudBase 数据库
 // ============================================================
 
 const DB = (function() {
-  const cfg = LC_CONFIG;
-  const useLC = cfg.appId && cfg.appKey;
-
-  // ========== LocalStorage 实现 ==========
+  // ========== LocalStorage 实现（离线/未配置时降级） ==========
   const LS = {
-    _getTable(name) {
-      try {
-        return JSON.parse(localStorage.getItem("ukiyoe_" + name) || "[]");
-      } catch(e) { return []; }
+    _getTable: function(name) {
+      try { return JSON.parse(localStorage.getItem("dagodui_" + name) || "[]"); }
+      catch(e) { return []; }
     },
-    _setTable(name, data) {
-      localStorage.setItem("ukiyoe_" + name, JSON.stringify(data));
+    _setTable: function(name, data) {
+      localStorage.setItem("dagodui_" + name, JSON.stringify(data));
     },
-    save(table, obj) {
-      const data = this._getTable(table);
+    save: function(table, obj) {
+      var data = this._getTable(table);
       obj.objectId = "ls_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
       obj.createdAt = new Date().toISOString();
       data.push(obj);
       this._setTable(table, data);
       return Promise.resolve(obj);
     },
-    query(table, filterFn) {
-      let data = this._getTable(table);
+    query: function(table, filterFn) {
+      var data = this._getTable(table);
       if (filterFn) data = data.filter(filterFn);
       return Promise.resolve(data);
     },
-    update(table, objectId, updates) {
-      const data = this._getTable(table);
-      const idx = data.findIndex(d => d.objectId === objectId);
-      if (idx >= 0) {
-        Object.assign(data[idx], updates);
-        this._setTable(table, data);
-      }
+    update: function(table, objectId, updates) {
+      var data = this._getTable(table);
+      var idx = data.findIndex(function(d) { return d.objectId === objectId; });
+      if (idx >= 0) { Object.assign(data[idx], updates); this._setTable(table, data); }
       return Promise.resolve(data[idx] || null);
     },
-    delete_(table, objectId) {
-      const data = this._getTable(table);
-      const filtered = data.filter(d => d.objectId !== objectId);
-      this._setTable(table, filtered);
+    delete_: function(table, objectId) {
+      var data = this._getTable(table);
+      this._setTable(table, data.filter(function(d) { return d.objectId !== objectId; }));
       return Promise.resolve(true);
     },
-    count(table, filterFn) {
-      let data = this._getTable(table);
+    count: function(table, filterFn) {
+      var data = this._getTable(table);
       if (filterFn) data = data.filter(filterFn);
       return Promise.resolve(data.length);
     }
   };
 
-  // ========== Leancloud 实现 (需要 SDK) ==========
-  // Leancloud SDK 通过 CDN 在 HTML 中加载
-  const LC = {
-    _ready: false,
-    _classMap: {},
+  // ========== CloudBase API 实现 ==========
+  var _apiFailed = false; // 一旦失败就切到本地，避免反复请求
 
-    init() {
-      if (this._ready) return;
-      if (typeof AV === "undefined") {
-        console.warn("Leancloud SDK 未加载，使用本地存储模式");
-        return;
+  const API = {
+    _base: "/api/db",
+
+    _request: async function(method, table, body, extra) {
+      var url = this._base + "?table=" + encodeURIComponent(table);
+      if (extra) {
+        Object.keys(extra).forEach(function(k) {
+          url += "&" + k + "=" + encodeURIComponent(extra[k]);
+        });
       }
-      AV.init({ appId: cfg.appId, appKey: cfg.appKey, serverURL: cfg.serverURL });
-      this._ready = true;
-      console.log("Leancloud 已连接");
+      var opts = { method: method, headers: { "Content-Type": "application/json" } };
+      if (body) opts.body = JSON.stringify(body);
+
+      var resp = await fetch(url, opts);
+      if (!resp.ok) throw new Error("API " + resp.status);
+      return resp.json();
     },
 
-    _getClass(table) {
-      if (!this._classMap[table]) {
-        this._classMap[table] = AV.Object.extend(table);
-      }
-      return this._classMap[table];
+    save: function(table, obj) {
+      return this._request("POST", table, obj);
     },
 
-    save(table, obj) {
-      const Cls = this._getClass(table);
-      const avObj = new Cls();
-      Object.keys(obj).forEach(k => { avObj.set(k, obj[k]); });
-      return avObj.save().then(o => ({ ...obj, objectId: o.id, createdAt: o.createdAt }));
+    query: function(table, filterFn) {
+      return this._request("GET", table, null, null).then(function(result) {
+        var list = (result.data || []).map(function(r) {
+          r.objectId = r._id; return r;
+        });
+        if (filterFn) list = list.filter(filterFn);
+        return list;
+      });
     },
 
-    query(table, filterFn) {
-      // LC queries are complex; for simplicity, fetch all and filter client-side
-      const Cls = this._getClass(table);
-      const q = new AV.Query(Cls);
-      q.limit(1000);
-      return q.find().then(results =>
-        results.map(r => {
-          const obj = r.toJSON();
-          obj.objectId = r.id;
-          return obj;
-        }).filter(filterFn || (() => true))
-      );
+    update: function(table, objectId, updates) {
+      return this._request("PUT", table, updates, { id: objectId }).then(function() {
+        return updates;
+      });
     },
 
-    update(table, objectId, updates) {
-      const Cls = this._getClass(table);
-      const q = new AV.Query(Cls);
-      return q.get(objectId).then(avObj => {
-        Object.keys(updates).forEach(k => { avObj.set(k, updates[k]); });
-        return avObj.save();
-      }).then(o => ({ ...updates, objectId: o.id }));
+    delete_: function(table, objectId) {
+      return this._request("DELETE", table, null, { id: objectId });
     },
 
-    delete_(table, objectId) {
-      const Cls = this._getClass(table);
-      const q = new AV.Query(Cls);
-      return q.get(objectId).then(avObj => avObj.destroy());
+    count: function(table) {
+      return this._request("GET", table, null, { count: "true" }).then(function(r) {
+        return r.total;
+      });
     },
 
-    count(table) {
-      const Cls = this._getClass(table);
-      const q = new AV.Query(Cls);
-      return q.count();
+    hasTodayRecord: function(table, author) {
+      return this._request("GET", table, null, { author: author, today: "true" }).then(function(r) {
+        return r.count > 0;
+      });
     }
   };
 
-  // ========== 统一接口 ==========
-  let backend = LS;
-
-  function getBackend() {
-    if (useLC && typeof AV !== "undefined") {
-      LC.init();
-      return LC;
-    }
-    return LS;
+  // ========== 统一接口（自动降级） ==========
+  function auto(fnName) {
+    return function() {
+      var args = arguments;
+      // API 已失败过 → 直接用本地
+      if (_apiFailed) {
+        return LS[fnName].apply(LS, args);
+      }
+      // 尝试 API
+      return API[fnName].apply(API, args).catch(function(e) {
+        console.warn("CloudBase API 不可用，降级到本地存储:", e.message);
+        _apiFailed = true;
+        return LS[fnName].apply(LS, args);
+      });
+    };
   }
 
   return {
-    init() {
-      backend = getBackend();
-      if (useLC) LC.init();
-      console.log("存储层就绪:", useLC && typeof AV !== "undefined" ? "Leancloud" : "本地存储");
+    init: function() {
+      // 快速探测 API 是否可用
+      fetch("/api/db?table=_ping&count=true").then(function(r) {
+        if (r.ok) console.log("存储层就绪: CloudBase 云开发");
+        else throw new Error("API not ready");
+      }).catch(function() {
+        _apiFailed = true;
+        console.log("存储层就绪: 本地存储（API 未配置或不可达）");
+      });
     },
 
-    save(table, obj) { return backend.save(table, obj); },
-    query(table, filterFn) { return backend.query(table, filterFn); },
-    update(table, objectId, updates) { return backend.update(table, objectId, updates); },
-    delete_(table, objectId) { return backend.delete_(table, objectId); },
-    count(table, filterFn) { return backend.count(table, filterFn); },
+    save:    auto("save"),
+    query:   auto("query"),
+    update:  auto("update"),
+    delete_: auto("delete_"),
+    count:   auto("count"),
 
-    // 检查今天是否已操作（用于心情投票等每日限制）
-    async hasTodayRecord(table, author) {
-      const today = new Date().toISOString().slice(0, 10);
-      const records = await backend.query(table, r => r.author === author && r.createdAt && r.createdAt.slice(0, 10) === today);
-      return records.length > 0;
+    hasTodayRecord: function(table, author) {
+      if (_apiFailed) {
+        var today = new Date().toISOString().slice(0, 10);
+        return LS.query(table, function(r) {
+          return r.author === author && r.createdAt && r.createdAt.slice(0, 10) === today;
+        }).then(function(records) { return records.length > 0; });
+      }
+      return API.hasTodayRecord(table, author).catch(function() {
+        _apiFailed = true;
+        var today = new Date().toISOString().slice(0, 10);
+        return LS.query(table, function(r) {
+          return r.author === author && r.createdAt && r.createdAt.slice(0, 10) === today;
+        }).then(function(records) { return records.length > 0; });
+      });
     }
   };
 })();

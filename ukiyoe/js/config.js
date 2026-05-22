@@ -4,12 +4,10 @@
 
 const UKIYOE_CONFIG = {
 
-  // ---- Leancloud 配置 ----
-  // 填入你的 Leancloud AppId / AppKey / ServerURL 即可激活云端存储
-  leancloud: {
-    appId: "",
-    appKey: "",
-    serverURL: ""
+  // ---- CloudBase（腾讯云开发）配置 ----
+  // 填入你的 CloudBase 环境 ID 即可激活云端存储
+  tcb: {
+    envId: "dagodui-d9gnhl56p7e817b74"
   },
 
   // ---- 班级基本信息 ----

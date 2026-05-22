@@ -87,12 +87,12 @@ const CLASS_CONFIG = {
 };
 
 // ============================================================
-// 1.1 新增：Leancloud 微后端配置
+// CloudBase（腾讯云开发）后端配置
+// 去 https://console.cloud.tencent.com/tcb 创建环境后填入 envId
+// 需要在控制台开通「匿名登录」和「云数据库」
 // ============================================================
-const LC_CONFIG = {
-  appId: "",
-  appKey: "",
-  serverURL: ""
+const TCB_CONFIG = {
+  envId: "dagodui-d9gnhl56p7e817b74"
 };
 
 // ============================================================
